@@ -16,6 +16,9 @@
 #define RECORDING_WINDOW_SIZE 256
 #define RECORDING_FREQUENCY_NUM 256
 
+// typedef spectrograph_t as an 2d matrix of floats
+typedef float spectrograph_t[RECORDING_FREQUENCY_NUM][RECORDING_WINDOW_SIZE];
+
 enum {
     PLAY,
     PAUSE,
@@ -27,6 +30,16 @@ typedef struct trainingSample {
     float spectograph[RECORDING_FREQUENCY_NUM][RECORDING_WINDOW_SIZE];
     int label;
 } trainingSample;
+
+typedef struct sample {
+    float spectograph[RECORDING_FREQUENCY_NUM][RECORDING_WINDOW_SIZE];
+    int label;
+} sample;
+
+typedef struct testSample {
+    float spectograph[RECORDING_FREQUENCY_NUM][RECORDING_WINDOW_SIZE];
+    int label;
+} testSample;
 
 void generateDataset(){
     // TODO()!
@@ -58,9 +71,59 @@ void generateDataset(){
 
 
 }
-void trainModel();
-void testModel();
-#endif
+void trainModel(trainingSample* trainingSamples, int numSamples){
+    //
+    // This function works if we use some libraries.
+    // If we use something like yolo we can simply give the dataset 
+    // to the model and train it like that
+    // ==================
 
+    // TODO()!
+    // load the spectrograph and the label from the file
+    // train the model using the spectrograph and the label
+    // store the model in a file
+    
+    // we split the training data into training and validation data
+    // we train the model using the training data and validate the model using the validation data
+    // we can use the validation data to tune the hyperparameters of the model
+
+    shuffle(trainingSamples, numSamples);
+    int numTrainingSamples = numSamples * 0.8;
+    int numValidationSamples = numSamples - numTrainingSamples;
+
+    for (int i=0; i<numTrainingSamples; i++){
+        // train the model using the training samples
+    }
+
+    for (int j=numTrainingSamples; j<numSamples; j++){
+        // validate the model using the validation samples
+    }
+}
+void testModel(trainingSample* trainingSamples, int numSamples){
+    // TODO()!
+    // load the spectrograph and the label from the file
+    // load the model from the file
+    // test the model using the spectrograph and the label
+    // print the accuracy of the model
+}
+
+// write a function that shuffles an array of training samples
+void shuffle(trainingSample* trainingSamples, int size){
+    // TODO()!
+    // shuffle the array of training samples
+    for(int j=0; j<10; ++j){
+        for(int i=0; i<size; i++){
+            int randomIndex = rand() % size;
+            swap(trainingSamples[i], trainingSamples[randomIndex]);
+        }
+    }
+}
+
+void exportModel(){
+    // TODO()!
+    // Decide how to export the model
+}
+
+#endif
 // Path: src/voiceRecognition.c
 // Source file handling voice recognition
