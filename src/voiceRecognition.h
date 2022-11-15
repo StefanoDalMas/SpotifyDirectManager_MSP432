@@ -13,8 +13,8 @@
 
 
 // include the msgpdsp library for fast fourier transform
-#define RECORDING_WINDOW_SIZE 256
-#define RECORDING_FREQUENCY_NUM 256
+#define RECORDING_WINDOW_SIZE 20
+#define RECORDING_FREQUENCY_NUM 32
 
 // typedef spectrograph_t as an 2d matrix of floats
 typedef float spectrograph_t[RECORDING_FREQUENCY_NUM][RECORDING_WINDOW_SIZE];
@@ -23,7 +23,7 @@ enum {
     PLAY,
     PAUSE,
     STOP,
-}
+};
 
 // define a struct training sample which holds a matrix spectograph and a label
 typedef struct trainingSample {
@@ -117,6 +117,14 @@ void shuffle(trainingSample* trainingSamples, int size){
             swap(trainingSamples[i], trainingSamples[randomIndex]);
         }
     }
+}
+
+void swap(trainingSample &a, trainingSample &b){
+    // TODO()!
+    // swap the two training samples
+    trainingSample temp = a;
+    a = b;
+    b = temp;
 }
 
 void exportModel(){
