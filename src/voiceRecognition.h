@@ -1,5 +1,7 @@
 // header file for voice recognition
 // 
+// For info about the microphone specifics, see:
+// BoosterPack Sensor Guide page 14/25
 #ifndef VOICERECOGNITION_H
 #define VOICERECOGNITION_H
 
@@ -11,10 +13,12 @@
 #include "source/ti/devices/msp432p4xx/driverlib/driverlib.h"
 #include "source/ti/devices/msp432p4xx/driverlib/pcm.h"
 
+#define minFreq 20
+#define maxFreq 20000
 
 // include the msgpdsp library for fast fourier transform
-#define RECORDING_WINDOW_SIZE 20
-#define RECORDING_FREQUENCY_NUM 32
+#define RECORDING_WINDOW_SIZE 2
+#define RECORDING_FREQUENCY_NUM 256
 
 // typedef spectrograph_t as an 2d matrix of floats
 typedef float spectrograph_t[RECORDING_FREQUENCY_NUM][RECORDING_WINDOW_SIZE];
