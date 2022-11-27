@@ -9,9 +9,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "source/ti/devices/msp432p4xx/inc/msp.h"
-#include "source/ti/devices/msp432p4xx/driverlib/driverlib.h"
-#include "source/ti/devices/msp432p4xx/driverlib/pcm.h"
+#include <fcntl.h>
+#include <errno.h>
+// #include "source/ti/devices/msp432p4xx/inc/msp.h"
+// #include "source/ti/devices/msp432p4xx/driverlib/driverlib.h"
+// #include "source/ti/devices/msp432p4xx/driverlib/pcm.h"
 
 #define minFreq 20
 #define maxFreq 20000
@@ -44,6 +46,14 @@ typedef struct testSample {
     float spectograph[RECORDING_FREQUENCY_NUM][RECORDING_WINDOW_SIZE];
     int label;
 } testSample;
+
+void generateDataset();
+void trainModel();
+void testModel(trainingSample* trainingSamples, int numSamples);
+void shuffle(trainingSample* samples, int numSamples);
+void myswap(trainingSample *a, trainingSample *b);
+void importModel(int** model);
+
 
 void generateDataset(){
     // TODO()!
@@ -118,22 +128,94 @@ void shuffle(trainingSample* trainingSamples, int size){
     for(int j=0; j<10; ++j){
         for(int i=0; i<size; i++){
             int randomIndex = rand() % size;
-            swap(trainingSamples[i], trainingSamples[randomIndex]);
+            myswap(&trainingSamples[i], &trainingSamples[randomIndex]);
         }
     }
 }
 
-void swap(trainingSample &a, trainingSample &b){
+void myswap(trainingSample *a, trainingSample *b){
     // TODO()!
     // swap the two training samples
-    trainingSample temp = a;
+    trainingSample* temp = a;
     a = b;
     b = temp;
 }
 
-void exportModel(){
-    // TODO()!
-    // Decide how to export the model
+/**
+ * @brief This function reads the parameters from "/../model_weights.txt"
+ * 
+ * @param model pointer to the future array holding the weights of the linear separators
+ */
+void importModel(int** model){
+    int fd = open("./../model_weights.txt", O_RDONLY);
+    if (fd == -1) {
+        fprintf(stderr, "Error opening file\n");
+        perror("Error: ");
+        exit(1);
+    }
+    FILE* logfile = fopen("log.txt", "w+");
+    if (logfile == NULL){
+        fprintf(stderr, "Error opening log file\n");
+    }
+    fprintf(logfile, "\n\nCommencing importing procedure...\n");
+    fprintf(logfile, "Opening model_weights.txt...\n");
+    FILE* file = fdopen(fd, "r");
+    if (file == NULL) {
+        fprintf(logfile, "Error opening file\n");
+        perror("Error: ");
+        exit(1);
+    }
+    fprintf(logfile, "Successfully opened model_weights.txt!\n");
+    // load the model from the file
+    // store the model in a variable
+    
+    char tmp = 0;
+    tmp = getc(file);
+    int classesNum = tmp - '0';
+    printf("%d\n", classesNum);
+    int featuresNum = 7;
+    model = (int**)malloc(sizeof(int*) * tmp);
+    for(int k=0; k<tmp; k++){
+        model[k] = (int*)malloc(sizeof(int)*featuresNum);
+    }
+    int i=-1, j=0;
+    printf("tmp: %c\n", tmp);
+    tmp = getc(file); // to go to the next line
+    printf("tmp: %c\n", tmp);
+    while(!feof(file)){
+        // read the model from the file
+        if (tmp == '\n') {
+            fprintf(logfile, "Read line no.%d\n", i);
+            i++;
+            j = 0;
+        }
+        else if (tmp == ',') {
+            j++;
+        } else if (tmp == ' '){
+            fprintf(logfile, "Unexpected value\nAborting now.");
+            fclose(logfile); fclose(file);
+            exit(2);
+        }
+        else {
+            printf("%c\n", tmp);
+            model[i][j] = tmp - '0';
+        }        
+        printf("%c\n", tmp);
+        tmp = getc(file);
+    }
+    fprintf(logfile, "Successfully read all %d lines.\nModel imported!\n", classesNum);
+    printf("Successfully read all %d lines.\nModel imported!\n", classesNum);
+    // testing the read of the model
+    fprintf(logfile, "MODEL:\n");
+    for(int i=0; i<classesNum; ++i){
+        for (int j=0; j<featuresNum-1; ++j){
+            fprintf(logfile, "%d,", model[i][j]);
+        }
+        fprintf(logfile, "%d\n", model[i][featuresNum-1]);
+    }
+    close(fd);
+    fclose(file);
+    fclose(logfile);
 }
 
 #endif

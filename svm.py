@@ -14,6 +14,7 @@ from sklearn import metrics
 # If possible set the Kernel cache size to 500MB or 1000MB
 # Setting C: the noisier the data the smaller C should be (default=1.0)
 # Do some scaling to obtain good results
+# Need to normalize the data !!!
 ################
 
 class Main:
@@ -62,7 +63,11 @@ class Main:
     def export_model():
         if clf.fit_status_ == 0:
             print("Model fit status: Successful")
-            np.savetxt("model_weights.txt", clf.coef_)
+
+            fd = open("model_weights.txt", "w")
+            fd.write(str(clf.classes_.size)) # Write number of classes
+            fd.close()
+            np.savetxt("model_weights.txt", clf.coef_, delimiter=",", fmt="%s", newline="\n")
             # Weights should be enough.
             # In the C script we only need to do a dot product between the weights and the input 
             # and check whether the result is positive or negative.
