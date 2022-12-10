@@ -2,8 +2,7 @@
 Project for Embedded Software for the IoT
 
 TODO
-- Get data from microphone
-- Format string to make a PUT
-- serial communication with MSP432
-- Develop SVM / CNN
+- Test Spotify POST and GET APIs
+- serial communication between ESP32 and MSP432
+- Develop SVM / CNN (Local/Edge Impulse)
 - merge all
