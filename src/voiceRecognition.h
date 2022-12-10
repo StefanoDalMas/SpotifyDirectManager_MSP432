@@ -146,7 +146,7 @@ void myswap(trainingSample *a, trainingSample *b){
  * 
  * @param model pointer to the future array holding the weights of the linear separators
  */
-void importModel(int** model){
+void importModel(float** model){
     int fd = open("./../model_weights.txt", O_RDONLY);
     if (fd == -1) {
         fprintf(stderr, "Error opening file\n");
@@ -174,9 +174,9 @@ void importModel(int** model){
     int classesNum = tmp - '0';
     printf("%d\n", classesNum);
     int featuresNum = 7;
-    model = (int**)malloc(sizeof(int*) * tmp);
+    model = (float**)malloc(sizeof(float*) * tmp);
     for(int k=0; k<tmp; k++){
-        model[k] = (int*)malloc(sizeof(int)*featuresNum);
+        model[k] = (float*)malloc(sizeof(float)*featuresNum);
     }
     int i=-1, j=0;
     printf("tmp: %c\n", tmp);
@@ -203,7 +203,7 @@ void importModel(int** model){
         printf("%c\n", tmp);
         tmp = getc(file);
     }
-    fprintf(logfile, "Successfully read all %d lines.\nModel imported!\n", classesNum);
+    fprintf(logfile, "Successfully read all %d lines.\n0 imported!\n", classesNum);
     printf("Successfully read all %d lines.\nModel imported!\n", classesNum);
     // testing the read of the model
     fprintf(logfile, "MODEL:\n");
