@@ -10,9 +10,14 @@
 
 
 const char* ssid = "iPhone di Stefano"; //insert here
-const char* password = ""; //insert here
+const char* password = "oo8uki1diy6jy"; //insert here
 const char* serverpost = "http://jsonplaceholder.typicode.com/posts";
 const char* serverget = "https://dummyjson.com/products/1";
+
+//Spotify Stuff
+const char* token = "Bearer "; //remember to create and add token
+const char* spotify_base_url = "https://api.spotify.com/v1/me";
+
 
 
 char jsonOutput[128];
@@ -73,7 +78,7 @@ void initWiFi(){
 
 void parse_print_request(String val){
   JSONVar myObject = JSON.parse(val); //convert to JSONObject
-  Serial.println(myObject);
+  //Serial.println(myObject);
   JSONVar keys = myObject.keys(); //Get alla keys
   //Print all data
   for(int i=0;i<keys.length();i++){
@@ -81,6 +86,7 @@ void parse_print_request(String val){
     Serial.print(keys[i]);
     Serial.print(" = ");
     Serial.println(value);
+
   }
 }
 
@@ -105,8 +111,13 @@ void getPage(){
   if(WiFi.status()== WL_CONNECTED)
   {
     HTTPClient http;
-    http.begin(serverget);
-    Serial.println(serverget);
+    String get_url = spotify_base_url;
+    get_url.concat("/player/devices");
+    http.begin(get_url);
+    http.addHeader("Authorization", token);
+    http.addHeader("Content-Type", "application/json");
+
+    Serial.println(get_url);
     //Catch response
     int response = http.GET();
     Serial.println("HTTP code: ");
@@ -133,22 +144,29 @@ void postPage(){
   if(WiFi.status()== WL_CONNECTED)
   {
     HTTPClient http;
-    http.begin(serverpost);
-    http.addHeader("Content-Type","application/json");
-    Serial.println(serverpost);
+    String post_url = spotify_base_url;
+    post_url.concat("/player/next");
+    http.begin(post_url);
+    http.addHeader("Authorization",token);
+    http.addHeader("Content-Type", "application/json");
+    http.addHeader("Content-Length","0");
+    Serial.println(post_url);
 
-    const size_t CAPACITY = JSON_OBJECT_SIZE(1);
-    StaticJsonDocument<CAPACITY> doc;
 
-    JsonObject object = doc.to<JsonObject>();
-    object["title"] = "Vediamo se sto giro funziona";
+    //useless stuff kinda
+    // const size_t CAPACITY = JSON_OBJECT_SIZE(1);
+    // StaticJsonDocument<CAPACITY> doc;
+    //object["title"] = "Vediamo se sto giro funziona";
 
-    serializeJson(doc,jsonOutput); 
-    int httpcode = http.POST(String(jsonOutput));
+    // JsonObject object = doc.to<JsonObject>();
+
+    //serializeJson(doc,jsonOutput); 
+    int httpcode = http.POST("");
     if (httpcode > 0){
       Serial.println("Ok \n");
       Serial.println(httpcode);
       Serial.println("\n");
+
       String res = http.getString();
       Serial.println(res);
     }else{
