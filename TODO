@@ -5,8 +5,7 @@ TODO
 - merge all
 
 # SVM Specific -- [AMIR]
-- Separate data into training and testing
-- Get function to convert from wav to ftt
+- Get function to convert from wav to fft
 - Normalize each feature so that they are between -1 and 1 with mean=0
 - Train SVM
 - Test SVM

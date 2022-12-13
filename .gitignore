@@ -2,3 +2,6 @@
 # ignore all files in the SpeechCommands directory and subdirectories
 SpeechCommands/**/*
 SpeechCommands/*
+dataSet/**/*
+dataSet/*
+dataSet
