@@ -5,6 +5,15 @@ import numpy as np
 from sklearn import datasets, svm
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
+import deeplake
+from scipy.fftpack import fft, ifft
+from scipy.io import wavfile as wav
+import time
+import sys
+import torch.utils.data.dataset
+import torchaudio
+import shutil
+import subprocess
 ################
 # Extra info on SVMs:
 # https://scikit-learn.org/stable/modules/svm.html#
@@ -16,6 +25,78 @@ from sklearn import metrics
 # Do some scaling to obtain good results
 # Need to normalize the data !!!
 ################
+
+commands = ['up', 'down', 'left', 'right', 'on', 'off', 'stop', 'one',
+            'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'zero']
+
+options = ['test', 'train', 'valid']
+
+def loadDataset1():
+    # load the speech commands dataset using torchaudio
+    # https://pytorch.org/audio/stable/datasets.html#speechcommands
+    # https://pytorch.org/audio/stable/datasets.html#torchaudio.datasets.SPEECHCOMMANDS
+
+    data = torchaudio.datasets.SPEECHCOMMANDS('.', download=True)
+    testing_list_file = 'SpeechCommands/speech_commands_v0.02/testing_list.txt'
+    validation_list_file = 'SpeechCommands/speech_commands_v0.02/validation_list.txt'
+    
+    ## Create directories if neeeded
+    if not os.path.isdir("dataSet"):
+        os.mkdir("dataSet")
+        print("Created directory: dataSet")
+    for option in options:
+        if not os.path.isdir('dataSet/' + option):
+            os.mkdir('dataSet/' + option)
+        print("\tCreated directory: dataSet/" + option)
+        for command in commands:
+            if not os.path.isdir('dataSet/' + option + '/' + command):
+                os.mkdir('dataSet/'+ option + '/' + command)
+                print("\t\tCreated directory: dataSet/" + option + '/' + command)
+    
+    ## Populate directories
+    os.chdir('dataSet')
+    ret_val, output = subprocess.getstatusoutput('find . -name "*.wav" | wc -l')
+    os.chdir('..')
+    print("The folder contains " + "".join(output.split()) + " samples")
+    if (int("".join(output.split())) == 0):
+        print("Populating directories...")
+        # TODO  populate directories
+        # open the testing_list.txt and validation_list.txt files
+        # read the paths and copy them in the correct directory using the shutil library
+
+        fd_test = open(testing_list_file, "r")
+        fd_valid = open(validation_list_file, "r")
+        for line in fd_test:
+            file_name = "".join(line.strip())
+            tmp = line.split("/")
+            if tmp[0] in commands:
+                shutil.move('SpeechCommands/speech_commands_v0.02/' + file_name, 'dataSet/test/' + file_name)
+        for line in fd_valid:
+            file_name = "".join(line.strip())
+            tmp = line.split("/")
+            if tmp[0] in commands:
+                shutil.move('SpeechCommands/speech_commands_v0.02/' + file_name, 'dataSet/valid/' + file_name)
+        # Copy all the remaining files in the train directory
+        # starting with name where name is in commands
+        for command in commands:
+            for file in os.listdir(f'SpeechCommands/speech_commands_v0.02/{command}/'):
+                shutil.move(f'SpeechCommands/speech_commands_v0.02/{command}/{file}', f'dataSet/train/{command}/{file}')    
+    else:
+        print("Directory ready for usage")
+
+    # credits to: https://arxiv.org/abs/1804.03209 - Warden 2018 dataset
+
+
+    #################################################################################
+    # TODO: convert wav files to fft and store them in a numpy array for later training
+    #### ALMOST WORKING, NEED TO SPLIT THE WAV INTO LEFT AND RIGHT CHANNELS
+    #### AND THEN CONVERT ONE OF THEM TO FFT
+    rate, data = wav.read('dataSet/train/one/0a7c2a8d_nohash_0.wav')
+    fft_out = np.fft.fft(data, 256)
+    plt.plot(np.abs(fft_out), color='steelblue')
+    plt.show()
+    exit(1)
+
 
 class Main:
     def __init__(self, X, y, clf: svm.SVC, num_labels, num_data):
@@ -74,7 +155,6 @@ class Main:
             # We do this for each line and we return the one yielding a positve result.
             # If none of them does, we return the None.
 
-
 def loadDataset():
         X = np.ndarray(shape=(num_data, 2, 512))
         y = np.ndarray((num_data, 1))
@@ -107,12 +187,16 @@ if __name__ == "__main__":
 
     clf = svm.SVC()
     #===========================================================================
-    X, y = loadDataset() ### TODO FINISH CLEANING UP THIS FUNCTION and MAIN
+    train, test = loadDataset1()
+    
+    X_train, y_train = train
+    X_test, y_test = test
+    #X, y = loadDataset() ### TODO FINISH CLEANING UP THIS FUNCTION and MAIN
     #sys.exit(0)
     # Split into training and test data
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=123
-    )
+    # X_train, X_test, y_train, y_test = train_test_split(
+    #     X, y, test_size=0.2, random_state=123
+    # )
     # Init the SVM model and train it
     Main.__init__(X_train, y_train, clf, num_labels, num_data)
 

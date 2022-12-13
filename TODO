@@ -1,0 +1,23 @@
+TODO
+- Test Spotify POST and GET APIs
+- serial communication between ESP32 and MSP432
+- Develop SVM / CNN (Local/Edge Impulse)
+- merge all
+
+# SVM Specific -- [AMIR]
+- Get function to convert from wav to fft
+- Normalize each feature so that they are between -1 and 1 with mean=0
+- Train SVM
+- Test SVM
+- Plot results
+- Tune Hyperparameters
+- Decide which kernel fun to use
+- Implement SVM in C with the weights from python SVM
+- Test SVM in C
+# less important
+- Try dimentionality reduction (prolly with PCA) and test the results
+
+
+# SVM Specific -- [Stefano],[Andy]
+# helpful but not necessary
+- Get recordings from the MSP for fine tuning
