@@ -7,8 +7,10 @@ const char* password = "oo8uki1diy6jy"; //insert here
 //Spotify Stuff
 //You always have to generate a new token and place it after the space character in "token".
 //If you get ERROR 401 it means that your token expired
-const char* token = "Bearer BQCZaaW9vFa0duHz9J7IdvnD-pMb6pHItY034gFieEu6e6t0tPAaQUHb1kUIdkmd_QGoJ-R_5MYL_64UXs6uA6FyUmSUEzrMPK8RV0WTdQfpOfBRKaEQ5dSydcN__ZY7e6HwTNqBLDAZzdSY2vgMwuzrZBZ71LRwGqKj0G4TKmoz4hzQGhSyQyBE-vadgila0Y8j"; //remember to create and add token
+const char* token = "Bearer "; //remember to create and add token
 const char* spotify_base_url = "https://api.spotify.com/v1/me";
+
+const int baud_rate = 115200;
 
 char jsonOutput[128];
 
@@ -17,8 +19,7 @@ enum mode{
 };
 
 void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(9600);
+  Serial.begin(baud_rate);
   Serial.println("Disconnecting from previous AP...");
   //Disconnect from previous AP
   WiFi.mode(WIFI_STA);
@@ -80,7 +81,8 @@ void parse_print_request(String val){
 void loop() {
   // put your main code here, to run repeatedly:
   while(Serial.available()){
-    char c = Serial.read();
+    char c;
+    c= Serial.read();
     if (c == 'g'){
       Serial.println("Performing GET ");
       performHTTP("/player/devices",GET);
@@ -95,6 +97,11 @@ void loop() {
       Serial.println("Performing next ");
       performHTTP("/player/next",POST);
       Serial.println("next Performed");
+    }
+    if (c == 'v'){
+      Serial.println("Performing volume change ");
+      performHTTP("/player/volume?volume_percent=70",PUT);
+      Serial.println("Volume changed");
     }
 
   }
@@ -119,7 +126,7 @@ void performHTTP(String url, mode m){
         httpcode= http.POST("");
         break;
       case PUT:
-        http.addHeader("Content-Length","0");
+        http.addHeader("Content-Length","0");  
         httpcode= http.PUT("");
         break;
       default:
@@ -142,109 +149,3 @@ void performHTTP(String url, mode m){
     Serial.println("Not connected to WiFi :(");
   }
 }
-
-// void performHTTP(){
-//   if(WiFi.status() == WL_CONNECTED){    
-//   }
-//   else{
-//     Serial.println("WiFi Disconnected");
-//   }
-// }
-
-// void putPage(){
-//   if(WiFi.status() == WL_CONNECTED){
-//     HTTPClient http;
-//     String put_url = spotify_base_url;
-//     put_url.concat("/player/pause");   
-//     http.begin(put_url);
-//     http.addHeader("Authorization",token);
-//     http.addHeader("Content-Type", "application/json");
-//     http.addHeader("Content-Length","0");
-//     Serial.println(put_url);
-//     int httpcode = http.PUT("");    
-//     if (httpcode > 0){
-//       Serial.println("HTTP Response");
-//       Serial.println(httpcode);
-//     }
-//     else{
-//       Serial.println("EWrrore");
-//     }
-    
-//     http.end(); 
-
-//   }
-//   else{
-//     Serial.println("Bruh è disconnected");
-//   }
-
-// }
-
-// void getPage(){
-//   if(WiFi.status()== WL_CONNECTED)
-//   {
-//     HTTPClient http;
-//     String get_url = spotify_base_url;
-//     get_url.concat("/player/devices");
-//     http.begin(get_url);
-//     http.addHeader("Authorization", token);
-//     http.addHeader("Content-Type", "application/json");
-
-//     Serial.println(get_url);
-//     //Catch response
-//     int response = http.GET();
-//     Serial.println("HTTP code: ");
-//     Serial.println(response);
-//     if (response > 0){
-//       if (response == HTTP_CODE_OK){ //It's 200
-//           String val = http.getString();
-//           parse_print_request(val);
-//       }
-//     }
-//     else{
-//       Serial.println("HTTP Failed: error code is ");
-//       Serial.println(http.errorToString(response).c_str()); //convert String into arryas of char with '\0' at the end
-//     }
-
-//     http.end();
-//   }
-//   else {
-//     Serial.println("WiFi Disconnected");
-//   }
-// }
-
-// void postPage(){
-//   if(WiFi.status()== WL_CONNECTED)
-//   {
-//     HTTPClient http;
-//     String post_url = spotify_base_url;
-//     post_url.concat("/player/next");
-//     http.begin(post_url);
-//     http.addHeader("Authorization",token);
-//     http.addHeader("Content-Type", "application/json");
-//     http.addHeader("Content-Length","0");
-//     Serial.println(post_url);
-
-
-//     //useless stuff kinda
-//     // const size_t CAPACITY = JSON_OBJECT_SIZE(1);
-//     // StaticJsonDocument<CAPACITY> doc;
-//     //object["title"] = "Vediamo se sto giro funziona";
-
-//     // JsonObject object = doc.to<JsonObject>();
-
-//     //serializeJson(doc,jsonOutput); 
-//     int httpcode = http.POST("");
-//     if (httpcode > 0){
-//       Serial.println("Ok \n");
-//       Serial.println(httpcode);
-//       Serial.println("\n");
-//     }else{
-//       Serial.println("Error code in sending data");
-//     }
-
-//     http.end();
-//   }
-//   else {
-//     Serial.println("WiFi Disconnected");
-//   }
-// }
