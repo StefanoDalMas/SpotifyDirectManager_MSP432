@@ -14,6 +14,7 @@ import torch.utils.data.dataset
 import torchaudio
 import shutil
 import subprocess
+from pydub import AudioSegment
 ################
 # Extra info on SVMs:
 # https://scikit-learn.org/stable/modules/svm.html#
@@ -25,21 +26,16 @@ import subprocess
 # Do some scaling to obtain good results
 # Need to normalize the data !!!
 ################
-
+################
+# Make sure commands and classes are the same and in the same order
 commands = ['up', 'down', 'left', 'right', 'on', 'off', 'stop', 'one',
             'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'zero']
-
+classes = {'up': 0, 'down': 1, 'left': 2, 'right': 3, 'on': 4, 'off': 5, 'stop': 6, 'one': 7,
+            'two': 8, 'three': 9, 'four': 10, 'five': 11, 'six': 12, 'seven': 13, 'eight': 14, 'nine': 15, 'zero': 16}
+################
 options = ['test', 'train', 'valid']
 
-def loadDataset1():
-    # load the speech commands dataset using torchaudio
-    # https://pytorch.org/audio/stable/datasets.html#speechcommands
-    # https://pytorch.org/audio/stable/datasets.html#torchaudio.datasets.SPEECHCOMMANDS
-
-    data = torchaudio.datasets.SPEECHCOMMANDS('.', download=True)
-    testing_list_file = 'SpeechCommands/speech_commands_v0.02/testing_list.txt'
-    validation_list_file = 'SpeechCommands/speech_commands_v0.02/validation_list.txt'
-    
+def createDirs():
     ## Create directories if neeeded
     if not os.path.isdir("dataSet"):
         os.mkdir("dataSet")
@@ -53,6 +49,8 @@ def loadDataset1():
                 os.mkdir('dataSet/'+ option + '/' + command)
                 print("\t\tCreated directory: dataSet/" + option + '/' + command)
     
+
+def populateDirs(testing_list_file, validation_list_file):
     ## Populate directories
     os.chdir('dataSet')
     ret_val, output = subprocess.getstatusoutput('find . -name "*.wav" | wc -l')
@@ -86,18 +84,65 @@ def loadDataset1():
 
     # credits to: https://arxiv.org/abs/1804.03209 - Warden 2018 dataset
 
-
+def extractFFT(numSamples, bins, option):
+    if option == 'train':
+        print("Extracting FFTs for training set...")
+    elif option == 'test':
+        print("Extracting FFTs for testing set...")
+    ## Extract FFT values
     #################################################################################
-    # TODO: convert wav files to fft and store them in a numpy array for later training
-    #### ALMOST WORKING, NEED TO SPLIT THE WAV INTO LEFT AND RIGHT CHANNELS
-    #### AND THEN CONVERT ONE OF THEM TO FFT
-    rate, data = wav.read('dataSet/train/one/0a7c2a8d_nohash_0.wav')
-    fft_out = np.fft.fft(data, 256)
-    plt.plot(np.abs(fft_out), color='steelblue')
-    plt.show()
-    exit(1)
+    # I'm not sure if this is the right way to do it, but for the time being this remains so.
+    ## I don't think this is working yet...
+    # allocate an array of size numSamples x (bins + command)
+    # then proceed with filling the array with the fft values followed by the command
+    # then reshape the array to the correct size
+    # do not use append as it is very slow
+    # only extract from train and test as we want to split these into train and test
+    
+    # create an matrix of size numSamples x bins + 1
+    dt = np.dtype([('fft', np.float64, bins), ('command', np.str_, 10)])
+    dataset = np.zeros((numSamples, bins + 1), dtype=dt)
+    it = 0
+    for command in commands:
+        print(f'Extracting FFTs for {command}')
+        for audio in os.listdir(f'dataSet/{option}/{command}'):
+            # read the audio file
+            tmp = AudioSegment.from_wav(f'dataSet/{option}/{command}/{audio}')
+            data = np.array(tmp.get_array_of_samples())
+            # extract the fft values
+            fft_out = np.fft.fft(data, bins)
+            # append the fft values to the array
+            # TODO
+            dataset[it]['fft'] = abs(fft_out)
+            dataset[it]['command'] = command
+            it += 1
+            # plot fft results in a histogram
+            # plt.hist(abs(fft_out), bins=bins)
+            # plt.show()
+    # reshape the array to the correct size
+    dataset = dataset.reshape(numSamples, bins + 1)
+    print(np.shape(dataset))
+
+    return dataset
 
 
+def loadDataset():
+    # load the speech commands dataset using torchaudio
+    # https://pytorch.org/audio/stable/datasets.html#speechcommands
+    # https://pytorch.org/audio/stable/datasets.html#torchaudio.datasets.SPEECHCOMMANDS
+
+    data = torchaudio.datasets.SPEECHCOMMANDS('.', download=True)
+    testing_list_file = 'SpeechCommands/speech_commands_v0.02/testing_list.txt'
+    validation_list_file = 'SpeechCommands/speech_commands_v0.02/validation_list.txt'
+    
+    createDirs()
+    populateDirs(testing_list_file, validation_list_file)
+    ## After splitting the original dataset into train, test and validation
+    # we want to extract the fft values from the audio files    
+    train_data = extractFFT(65589, 256, 'train')
+    test_data = extractFFT(8192, 256, 'test')
+    return train_data, test_data
+    
 class Main:
     def __init__(self, X, y, clf: svm.SVC, num_labels, num_data):
         self.clf = clf
@@ -154,27 +199,6 @@ class Main:
             # and check whether the result is positive or negative.
             # We do this for each line and we return the one yielding a positve result.
             # If none of them does, we return the None.
-
-def loadDataset():
-        X = np.ndarray(shape=(num_data, 2, 512))
-        y = np.ndarray((num_data, 1))
-        # take samples from directory /../samples/ and 
-        # store them in X and assign the directory name as label in y
-        # open each file in the /../samples/ directory and store the data in X[i]
-        #  and the name of the directory in y[i]
-        j = 0
-        for i in range(num_labels):
-            for path in os.listdir(f"./samples/{i}"):
-                print(path)
-                #fd = open(f"./samples/{i}/{path}", "r")
-                X = np.loadtxt(f"./samples/{i}/{path}", dtype=np.float64, delimiter=",")
-                y[j] = i
-                j += 1
-                #fd.close()
-        for i in range(num_data):
-            print(f"{X[i]}\t label: {y[i]}")
-        return X, y
-
 # Testing
 if __name__ == "__main__":
     # Imports
@@ -187,16 +211,40 @@ if __name__ == "__main__":
 
     clf = svm.SVC()
     #===========================================================================
-    train, test = loadDataset1()
-    
-    X_train, y_train = train
-    X_test, y_test = test
-    #X, y = loadDataset() ### TODO FINISH CLEANING UP THIS FUNCTION and MAIN
-    #sys.exit(0)
-    # Split into training and test data
-    # X_train, X_test, y_train, y_test = train_test_split(
-    #     X, y, test_size=0.2, random_state=123
-    # )
+    train, test = loadDataset()
+    ############################
+    # Normalise data
+    # We calculate the mean for each variable and the standard deviation
+
+    X_train = np.asmatrix(list(map(lambda x: x[0], train[:]["fft"])))
+    y_train = np.asmatrix(list(map(lambda x: x[0], train[:]["command"])))
+    X_test = np.asmatrix(list(map(lambda x: x[0], test[:]["fft"])))
+    y_test = np.asmatrix(list(map(lambda x: x[0], test[:]["command"])))
+    # WORKS SO FAR :D
+    #===========================================================================
+    invertedMat = X_train.T
+    invertedMat1 = X_test.T
+    means = np.zeros(len(invertedMat))
+    stds = np.zeros(len(invertedMat))
+    means1 = np.zeros(len(invertedMat1))
+    stds1 = np.zeros(len(invertedMat1))
+    for i in range(invertedMat):
+        means[i] = np.mean(invertedMat[i])
+        stds[i] = np.std(invertedMat[i])
+        means1[i] = np.mean(invertedMat1[i])
+        stds1[i] = np.std(invertedMat1[i])
+    for i in range(X_train):
+        for j in range(X_train[i]):
+            X_train[i][j] = (X_train[i][j] - means[j]) / stds[j]
+
+    for i in range(X_test):
+        for j in range(X_test[i]):
+            X_test[i][j] = (X_test[i][j] - means1[j]) / stds1[j]
+    print("\n\nPrinting train data")
+    print(X_train)
+    print("\n\nPrinting test data")
+    print(X_test)
+    #===========================================================================
     # Init the SVM model and train it
     Main.__init__(X_train, y_train, clf, num_labels, num_data)
 

@@ -1,5 +1,4 @@
 .DS_Store
-# ignore all files in the SpeechCommands directory and subdirectories
 SpeechCommands/**/*
 SpeechCommands/*
 dataSet/**/*
