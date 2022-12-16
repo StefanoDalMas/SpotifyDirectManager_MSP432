@@ -6,7 +6,6 @@ TODO
 
 # SVM Specific -- [AMIR]
 - Test function to convert from wav to fft
-- Normalize each feature so that they are between -1 and 1 with mean=0
 - Train SVM
 - Test SVM
 - Plot results

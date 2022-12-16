@@ -5,12 +5,9 @@ import numpy as np
 from sklearn import datasets, svm
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
-import deeplake
 from scipy.fftpack import fft, ifft
 from scipy.io import wavfile as wav
 import time
-import sys
-import torch.utils.data.dataset
 import torchaudio
 import shutil
 import subprocess
@@ -110,10 +107,10 @@ def extractFFT(numSamples, bins, option):
             tmp = AudioSegment.from_wav(f'dataSet/{option}/{command}/{audio}')
             data = np.array(tmp.get_array_of_samples())
             # extract the fft values
-            fft_out = np.fft.fft(data, bins)
+            fft_out = abs(np.fft.fft(data, bins))
             # append the fft values to the array
             # TODO
-            dataset[it]['fft'] = abs(fft_out)
+            dataset[it]['fft'] = fft_out
             dataset[it]['command'] = command
             it += 1
             # plot fft results in a histogram
@@ -143,6 +140,7 @@ def loadDataset():
     test_data = extractFFT(8192, 256, 'test')
     return train_data, test_data
     
+
 class Main:
     def __init__(self, X, y, clf: svm.SVC, num_labels, num_data):
         self.clf = clf
@@ -161,9 +159,9 @@ class Main:
         # by using the option multi_class='crammer_singer'. In practice, 
         # one-vs-rest classification is usually preferred, since the results
         #  are mostly similar, but the runtime is significantly less.
-        clf.fit(X_train, y_train)
+        clf.fit(X, y)
 
-    def test_model():
+    def test_model(X_test, y_test):
         # Test the model
         y_pred = clf.predict(X_test)
         print(y_pred)
@@ -206,7 +204,7 @@ if __name__ == "__main__":
     # scales it as suggested in the notes to have mean 0 and std 1
     # X, y = testDataset() ## to use a sample dataset
     # change num_data to the actual amount of training data
-    num_labels = 2
+    num_features = 2
     num_data = 3 # change this to the actual amount of training data
 
     clf = svm.SVC()
@@ -217,58 +215,41 @@ if __name__ == "__main__":
     # We calculate the mean for each variable and the standard deviation
 
     X_train = np.asmatrix(list(map(lambda x: x[0], train[:]["fft"])))
-    y_train = np.asmatrix(list(map(lambda x: x[0], train[:]["command"])))
+    y_train = np.asarray(list(map(lambda x: x[0], train[:]["command"])))
     X_test = np.asmatrix(list(map(lambda x: x[0], test[:]["fft"])))
-    y_test = np.asmatrix(list(map(lambda x: x[0], test[:]["command"])))
+    y_test = np.asarray(list(map(lambda x: x[0], test[:]["command"])))
+    print(X_train.shape)
+    print(y_train.shape)
+    print(X_test.shape) 
+    print(y_test.shape) 
+    num_features = X_train.shape[1]
+    num_data = X_train.shape[0]
+    print(f"{num_features} features and {num_data} data points")
     # WORKS SO FAR :D
     #===========================================================================
-    invertedMat = X_train.T
-    invertedMat1 = X_test.T
-    means = np.zeros(len(invertedMat))
-    stds = np.zeros(len(invertedMat))
-    means1 = np.zeros(len(invertedMat1))
-    stds1 = np.zeros(len(invertedMat1))
-    for i in range(invertedMat):
-        means[i] = np.mean(invertedMat[i])
-        stds[i] = np.std(invertedMat[i])
-        means1[i] = np.mean(invertedMat1[i])
-        stds1[i] = np.std(invertedMat1[i])
-    for i in range(X_train):
-        for j in range(X_train[i]):
-            X_train[i][j] = (X_train[i][j] - means[j]) / stds[j]
+    global means, stds, means1, stds1
+    means = np.zeros(num_features, dtype=np.float64)
+    stds = np.zeros(num_features, dtype=np.float64)
+    for i in range(num_features):
+        means[i] = (np.mean(X_train[:,i]))
+        stds[i] = (np.std(X_train[:,i]))
+    # print("\n\nPrinting means:")
+    # print(means)
+    # print(means[0])
+    # print("\n\nPrinting stds:")
+    # print(stds)
 
-    for i in range(X_test):
-        for j in range(X_test[i]):
-            X_test[i][j] = (X_test[i][j] - means1[j]) / stds1[j]
-    print("\n\nPrinting train data")
-    print(X_train)
-    print("\n\nPrinting test data")
-    print(X_test)
+
+    for i,j in range(num_data, num_features):
+        X_train[i][j] = (X_train[i][j] - means[j]) / stds[j]
+        X_test[i][j] = (X_test[i][j] - means[j]) / stds[j]
+    #===========================================================================
+    # print("\n\nPrinting train data")
+    # print(X_train)
+    # print("\n\nPrinting test data")
+    # print(X_test)
     #===========================================================================
     # Init the SVM model and train it
-    Main.__init__(X_train, y_train, clf, num_labels, num_data)
-
+    main = Main(X_train, y_train, clf, num_labels=num_features, num_data=num_data)
     # Test the model
-    Main.test_model(X_test, y_test)
-    
-
-# write an fast fourier transform function
-# write a function to calculate the power spectrum of a signal
-def fastFourierTransform(signal, num_samples):
-    
-    # calculate the power spectrum of a signal
-    # signal is a 1D array of the signal
-    # num_samples is the number of samples in the signal
-    # returns the power spectrum of the signal
-
-    # calculate the fourier transform of the signal
-    fourier_transform = np.fft.fft(signal)
-
-    # calculate the power spectrum
-    power_spectrum = np.abs(fourier_transform)**2
-
-    # calculate the frequencies
-    frequencies = np.fft.fftfreq(num_samples)
-
-    # return the power spectrum and the frequencies
-    return power_spectrum, frequencies
+    main.test_model(X_test, y_test)
