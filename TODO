@@ -1,22 +1,12 @@
-TODO
-- Test Spotify POST and GET APIs
-- serial communication between ESP32 and MSP432
-- Develop SVM / CNN (Local/Edge Impulse)
-- merge all
-
-# SVM Specific -- [AMIR]
-- Test function to convert from wav to fft
-- Train SVM
-- Test SVM
-- Plot results
-- Tune Hyperparameters
-- Decide which kernel fun to use
-- Implement SVM in C with the weights from python SVM
-- Test SVM in C
-# less important
-- Try dimentionality reduction (prolly with PCA) and test the results
+TODO final
+- read interrupts from both joystick and buttons correctly
+- set up LCD screen with Spotify logo (top right corner), metadata (Author and song's name), possible play state
+- merge EdgeImpulse's CNN (and remove either buttons or joystick functionalities)
+- clean up code
+- prepare video
+- prepare readme file with everything needed
 
 
-# SVM Specific -- [Stefano],[Andy]
-# helpful but not necessary
-- Get recordings from the MSP for fine tuning
+optional:
+- clean UART "protocol" lol
+- PPT presentation or something like that to explain 
