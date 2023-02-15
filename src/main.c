@@ -14,7 +14,8 @@ int counter = 0;
 char str[4];
 
 //ADC conversion
-static uint16_t resultsBuffer[2];
+static uint16_t joystickBuffer[2];
+static uint16_t accelerometer_z_axis;
 
 /* UART Configuration Parameter. These are the configuration parameters to
  * make the eUSCI A UART module to operate with a 115200 baud rate. These
@@ -40,10 +41,16 @@ const eUSCI_UART_ConfigV1 uartConfig =
 //DriverLib
 
 void setUpButtons(){
+    //clean voltage in buttons
+    GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN1);
+    GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN4);
+    GPIO_setOutputLowOnPin(GPIO_PORT_P5, GPIO_PIN1);
+    GPIO_setOutputLowOnPin(GPIO_PORT_P3, GPIO_PIN5);
 
     /* P1.1 as input for button */
     GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN1);
     GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN1);
+
 
     /* P1.4 as input for button */
     GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN4);
@@ -62,14 +69,22 @@ void setUpButtons(){
     Interrupt_enableInterrupt(INT_PORT5);
     Interrupt_enableInterrupt(INT_PORT1);
 
+    //clear interrupt flags
+    GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN1);
+    GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN4);
+    GPIO_clearInterruptFlag(GPIO_PORT_P5, GPIO_PIN1);
+    GPIO_clearInterruptFlag(GPIO_PORT_P3, GPIO_PIN5);
+
     /* activate interrupt notification */
     Interrupt_enableMaster();
 }
 
 void _adcInit(){
-    /* Configures Pin 6.0 and 4.4 as ADC input */
+    /* Configures Pin 6.0 and 4.4 as ADC input for the jotstick*/
         GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P6, GPIO_PIN0, GPIO_TERTIARY_MODULE_FUNCTION);
         GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P4, GPIO_PIN4, GPIO_TERTIARY_MODULE_FUNCTION);
+        /*6.1 as ADC input in order to read z axis from accelerometer*/
+        GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P6, GPIO_PIN1,GPIO_TERTIARY_MODULE_FUNCTION);
 
         /* Initializing ADC (ADCOSC/64/8) */
         ADC14_enableModule();
@@ -78,6 +93,7 @@ void _adcInit(){
         /* Configuring ADC Memory (ADC_MEM0 - ADC_MEM1 (A15, A9)  with repeat)
              * with internal 2.5v reference */
         ADC14_configureMultiSequenceMode(ADC_MEM0, ADC_MEM1, true);
+        ADC14_configureMultiSequenceMode(ADC_MEM0, ADC_MEM2, true);
         ADC14_configureConversionMemory(ADC_MEM0,
                 ADC_VREFPOS_AVCC_VREFNEG_VSS,
                 ADC_INPUT_A15, ADC_NONDIFFERENTIAL_INPUTS);
@@ -86,9 +102,14 @@ void _adcInit(){
                 ADC_VREFPOS_AVCC_VREFNEG_VSS,
                 ADC_INPUT_A9, ADC_NONDIFFERENTIAL_INPUTS);
 
+        ADC14_configureConversionMemory(ADC_MEM2,ADC_VREFPOS_AVCC_VREFNEG_VSS,
+                ADC_INPUT_A11, ADC_NONDIFFERENTIAL_INPUTS);
+
         /* Enabling the interrupt when a conversion on channel 1 (end of sequence)
          *  is complete and enabling conversions */
         ADC14_enableInterrupt(ADC_INT1);
+        //enable interrupt for accelerometer
+        ADC14_enableInterrupt(ADC_INT2);
 
         /* Enabling Interrupts */
         Interrupt_enableInterrupt(INT_ADC14);
@@ -136,23 +157,41 @@ void setUpUART(){
         Interrupt_enableSleepOnIsrExit();
 }
 
-//check if Joystick is not tilted at all
-bool isInIdleState(int x){
-    return ((x>7000) && (x<9000));
+void _hwinit(){
+    WDT_A_holdTimer();
+    Interrupt_disableMaster();
+
+    /* Set the core voltage level to VCORE1 */
+    PCM_setCoreVoltageLevel(PCM_VCORE1);
+
+    /* Set 2 flash wait states for Flash bank 0 and 1*/
+    FlashCtl_setWaitState(FLASH_BANK0, 2);
+    FlashCtl_setWaitState(FLASH_BANK1, 2);
+
+    /* Initializes Clock System */
+    CS_setDCOCenteredFrequency(CS_DCO_FREQUENCY_48);
+    CS_initClockSignal(CS_MCLK, CS_DCOCLK_SELECT, CS_CLOCK_DIVIDER_1);
+    CS_initClockSignal(CS_HSMCLK, CS_DCOCLK_SELECT, CS_CLOCK_DIVIDER_1);
+    CS_initClockSignal(CS_SMCLK, CS_DCOCLK_SELECT, CS_CLOCK_DIVIDER_1);
+    CS_initClockSignal(CS_ACLK, CS_REFOCLK_SELECT, CS_CLOCK_DIVIDER_1);
+
+
+    //Flush stdout -- remove this!!!!
+    fflush(stdout);
+    fflush(stdout);
 }
 
 
 
+
 int main(void){
+    _hwinit();
+    setUpButtons();
     _adcInit();
-    //setUpButtons();
-    //setUpUART(); not using it atm
-    /* Halting WDT  */
-    WDT_A_holdTimer();
+    setUpUART();
 
     while(1)
     {
-
         Interrupt_enableSleepOnIsrExit();
         PCM_gotoLPM0InterruptSafe();
     }
@@ -187,6 +226,7 @@ void EUSCIA2_IRQHandler(void)
 }
 
 
+//Interrupts
 void PORT1_IRQHandler(){
 
     uint_fast16_t status = GPIO_getEnabledInterruptStatus(GPIO_PORT_P1);
@@ -216,48 +256,69 @@ void PORT5_IRQHandler(){
     }
 }
 
+
 void PORT3_IRQHandler(){
     uint_fast16_t status = GPIO_getEnabledInterruptStatus(GPIO_PORT_P3);
     GPIO_clearInterruptFlag(GPIO_PORT_P3,status);
-    if (status & GPIO_PIN5){
+    if (status & GPIO_PIN5 ){
         printf("Stai premendo S2\n"); //same as P1.4
     }
 }
 
-bool x_tilted = false;
-bool y_tilted = false;
+//Joystick values reading
 
+//check if Joystick is not tilted at all
+bool isInIdleState(int x){
+    return ((x>7000) && (x<9000));
+}
+bool tilted = false;
+
+//ADC for joystick and accelerometer
 void ADC14_IRQHandler(void){
     uint64_t status;
     status = ADC14_getEnabledInterruptStatus();
     ADC14_clearInterruptFlag(status);
 
+    //Joystick reading finished
     if(status & ADC_INT1){ //Conversion is over
         //x goes from 500 to 16k because it is broken
         //y goes from 0 to 16k
-        resultsBuffer[0] = ADC14_getResult(ADC_MEM0);
-        resultsBuffer[1] = ADC14_getResult(ADC_MEM1);
-        //printf("x %d y %d\n",resultsBuffer[0],resultsBuffer[1]);
+        joystickBuffer[0] = ADC14_getResult(ADC_MEM0);
+        joystickBuffer[1] = ADC14_getResult(ADC_MEM1);
+        //printf("x %d y %d\n",joystickBuffer[0],joystickBuffer[1]);
         //I need 2 bools to check if the joystick is tilted in a certain direction
-        if(resultsBuffer[0] > 13000 && !x_tilted){
-            printf("dx \n");
-            x_tilted = true;
+        if(joystickBuffer[0] > 13000 && !tilted){
+            printf("joystick dx \n");
+            tilted = true;
         }
-        if(resultsBuffer[0] < 3500 && !x_tilted){
-            printf("sx \n");
-            x_tilted = true;
+        if(joystickBuffer[0] < 3500 && !tilted){
+            printf("joystick sx \n");
+            tilted = true;
         }
-        if(resultsBuffer[1] > 13000 && !y_tilted){
-            printf("up \n");
-            y_tilted = true;
+        if(joystickBuffer[1] > 13000 && !tilted){
+            printf("joystick up \n");
+            tilted = true;
         }
-        if(resultsBuffer[1] < 500 && !y_tilted){
-            printf("down \n");
-            y_tilted = true;
+        if(joystickBuffer[1] < 500 && !tilted){
+            printf("joystick down \n");
+            tilted = true;
         }
-        if(isInIdleState(resultsBuffer[0]) && isInIdleState(resultsBuffer[1])){
-            x_tilted = false;
-            y_tilted = false;
+        if(isInIdleState(joystickBuffer[0]) && isInIdleState(joystickBuffer[1])){
+            tilted = false;
+        }
+    }
+    //accereometer reading
+    if (status & ADC_INT2){
+        accelerometer_z_axis = ADC14_getResult(ADC_MEM2);
+        bool up_condition = accelerometer_z_axis> 14000;
+        bool down_condition = accelerometer_z_axis < 9000;
+        if (up_condition){
+            printf("accelerometer up\n");
+            _delay_cycles(5000000);
+        }
+        if (down_condition){
+            printf("accelerometer down\n");
+            _delay_cycles(5000000);
         }
     }
 }
