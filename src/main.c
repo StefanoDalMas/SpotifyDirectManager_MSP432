@@ -1,10 +1,18 @@
 /* DriverLib Includes */
 #include <ti/devices/msp432p4xx/driverlib/driverlib.h>
+// Screen includes
+#include <ti/grlib/grlib.h>
+#include "LcdDriver/Crystalfontz128x128_ST7735.h"
+#include "LcdDriver/HAL_MSP_EXP432P401R_Crystalfontz128x128_ST7735.h"
+
 
 /* Standard Includes */
 #include <stdint.h>
 #include<stdio.h>
 #include <stdbool.h>
+
+//LCD
+Graphics_Context g_sContext;
 
 //UART
 uint8_t TXData = 1;
@@ -37,6 +45,24 @@ const eUSCI_UART_ConfigV1 uartConfig =
         EUSCI_A_UART_8_BIT_LEN                  // 8 bit data length
 };
 
+
+//LCD display
+void _graphicsInit()
+{
+    /* Initializes display */
+    Crystalfontz128x128_Init();
+
+    /* Set default screen orientation */
+    Crystalfontz128x128_SetOrientation(LCD_ORIENTATION_UP);
+
+    /* Initializes graphics context */
+    Graphics_initContext(&g_sContext, &g_sCrystalfontz128x128,
+                         &g_sCrystalfontz128x128_funcs);
+    Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_RED);
+    Graphics_setBackgroundColor(&g_sContext, GRAPHICS_COLOR_WHITE);
+    GrContextFontSet(&g_sContext, &g_sFontFixed6x8);
+    Graphics_clearDisplay(&g_sContext);
+}
 
 //DriverLib
 
@@ -135,8 +161,7 @@ void sendString(char* str) {
 
 void setUpUART(){
     /* Selecting P1.2 and P1.3 in UART mode and P1.0 as output (LED) */
-        GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P3,
-                 GPIO_PIN2 | GPIO_PIN3, GPIO_PRIMARY_MODULE_FUNCTION);
+        GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P3,GPIO_PIN2 | GPIO_PIN3, GPIO_PRIMARY_MODULE_FUNCTION);
         GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN0);
         GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN0);
         /* Setting DCO to 24MHz (upping Vcore) -> CPU operates at 24 MHz!*/
@@ -188,7 +213,10 @@ int main(void){
     _hwinit();
     setUpButtons();
     _adcInit();
+    //_graphicsInit();
     setUpUART();
+    Graphics_drawStringCentered(&g_sContext, (int8_t *) "Hello", AUTO_STRING_LENGTH,
+                                60, 60, OPAQUE_TEXT);
 
     while(1)
     {
@@ -205,17 +233,6 @@ void EUSCIA2_IRQHandler(void)
 
     if(status & EUSCI_A_UART_RECEIVE_INTERRUPT_FLAG)
     {
-//        printf("data received\n");
-//        data_received[0]= UART_receiveData(EUSCI_A2_BASE);
-//        data_received[1]= UART_receiveData(EUSCI_A2_BASE);
-//        data_received[2]= UART_receiveData(EUSCI_A2_BASE);
-//        data_received[3]= UART_receiveData(EUSCI_A2_BASE);
-//        data_received[4] = '\0';
-//            int i=0;
-//            for(;i<4;i++){
-//                printf("%c", data_received[i]);
-//            }
-//            printf("\n");
         RXData = UART_receiveData(EUSCI_A2_BASE);
         printf("%c\n", RXData);
         UART_transmitData(EUSCI_A2_BASE,'%');
@@ -237,22 +254,22 @@ void PORT1_IRQHandler(){
     if (status & GPIO_PIN4){
         printf("ho premuto 1.4\n"); //check why tf this keeps launching an interrupt
     }
-//    if(P1->IFG & BIT4){
-//        printf("ho spedito brother\n");
-//        char str[4] = {'n', 'e', 'x', 't','\0'};
-//        sendString(str);
-//        char str2[4] = {'p','l','a','y','\0'};
-//        sendString(str2);
-//        char str3[4] = {'s','t','o','p','\0'};
-//        sendString(str3);
-//    }
 }
+
+bool playing = false;
 
 void PORT5_IRQHandler(){
     uint_fast16_t status = GPIO_getEnabledInterruptStatus(GPIO_PORT_P5);
     GPIO_clearInterruptFlag(GPIO_PORT_P5,status);
     if (status & GPIO_PIN1){
-        printf("Stai premendo S1\n");
+        if (playing){
+            printf("stop\n");
+            playing = false;
+        }
+        else{
+            printf("play\n");
+            playing = true;
+        }
     }
 }
 
@@ -261,7 +278,7 @@ void PORT3_IRQHandler(){
     uint_fast16_t status = GPIO_getEnabledInterruptStatus(GPIO_PORT_P3);
     GPIO_clearInterruptFlag(GPIO_PORT_P3,status);
     if (status & GPIO_PIN5 ){
-        printf("Stai premendo S2\n"); //same as P1.4
+        printf("ormai è periodica sta foto\n"); //same as P1.4
     }
 }
 
@@ -288,37 +305,47 @@ void ADC14_IRQHandler(void){
         //printf("x %d y %d\n",joystickBuffer[0],joystickBuffer[1]);
         //I need 2 bools to check if the joystick is tilted in a certain direction
         if(joystickBuffer[0] > 13000 && !tilted){
-            printf("joystick dx \n");
+            printf("next\n");
+            char str[4] = {'n', 'e', 'x', 't','\0'};
+            //sendString(str);
             tilted = true;
         }
         if(joystickBuffer[0] < 3500 && !tilted){
-            printf("joystick sx \n");
+            printf("prev\n");
+            char str[4] = {'p', 'r', 'e', 'v','\0'};
+            //sendString(str);
             tilted = true;
         }
         if(joystickBuffer[1] > 13000 && !tilted){
-            printf("joystick up \n");
+            printf("upup\n");
+            char str[4] = {'u', 'p', 'u', 'p','\0'};
+            //sendString(str);
             tilted = true;
         }
         if(joystickBuffer[1] < 500 && !tilted){
-            printf("joystick down \n");
+            printf("down \n");
+            char str[4] = {'d', 'o', 'w', 'n','\0'};
+            //sendString(str);
             tilted = true;
         }
         if(isInIdleState(joystickBuffer[0]) && isInIdleState(joystickBuffer[1])){
             tilted = false;
         }
     }
-    //accereometer reading
+    //acceleometer reading
+    /*
     if (status & ADC_INT2){
         accelerometer_z_axis = ADC14_getResult(ADC_MEM2);
         bool up_condition = accelerometer_z_axis> 14000;
         bool down_condition = accelerometer_z_axis < 9000;
         if (up_condition){
-            printf("accelerometer up\n");
+            printf("upup\n");
             _delay_cycles(5000000);
         }
         if (down_condition){
-            printf("accelerometer down\n");
+            printf("down\n");
             _delay_cycles(5000000);
         }
     }
+    */
 }
