@@ -34,9 +34,9 @@ static uint16_t accelerometer_z_axis;
 const eUSCI_UART_ConfigV1 uartConfig =
 {
         EUSCI_A_UART_CLOCKSOURCE_SMCLK,          // SMCLK Clock Source
-        13,                                      // BRDIV = 13
+        26,//13,                                      // BRDIV = 13
         0,                                       // UCxBRF = 0
-        37,                                      // UCxBRS = 37
+        111,//37,                                      // UCxBRS = 37
         EUSCI_A_UART_NO_PARITY,                  // No Parity
         EUSCI_A_UART_LSB_FIRST,                  // MSB First
         EUSCI_A_UART_ONE_STOP_BIT,               // One stop bit
@@ -165,10 +165,10 @@ void setUpUART(){
         GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN0);
         GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN0);
         /* Setting DCO to 24MHz (upping Vcore) -> CPU operates at 24 MHz!*/
-        FlashCtl_setWaitState(FLASH_BANK0, 1);
-        FlashCtl_setWaitState(FLASH_BANK1, 1);
+        FlashCtl_setWaitState(FLASH_BANK0, 2);
+        FlashCtl_setWaitState(FLASH_BANK1, 2);
         PCM_setCoreVoltageLevel(PCM_VCORE1);
-        CS_setDCOCenteredFrequency(CS_DCO_FREQUENCY_24);
+        CS_setDCOCenteredFrequency(CS_DCO_FREQUENCY_48);
 
         /* Configuring UART Module */
         UART_initModule(EUSCI_A2_BASE, &uartConfig);
@@ -215,8 +215,7 @@ int main(void){
     _adcInit();
     //_graphicsInit();
     setUpUART();
-    Graphics_drawStringCentered(&g_sContext, (int8_t *) "Hello", AUTO_STRING_LENGTH,
-                                60, 60, OPAQUE_TEXT);
+    //Graphics_drawStringCentered(&g_sContext, (int8_t *) "Hello", AUTO_STRING_LENGTH,60, 60, OPAQUE_TEXT);
 
     while(1)
     {
@@ -307,25 +306,25 @@ void ADC14_IRQHandler(void){
         if(joystickBuffer[0] > 13000 && !tilted){
             printf("next\n");
             char str[4] = {'n', 'e', 'x', 't','\0'};
-            //sendString(str);
+            sendString(str);
             tilted = true;
         }
         if(joystickBuffer[0] < 3500 && !tilted){
             printf("prev\n");
             char str[4] = {'p', 'r', 'e', 'v','\0'};
-            //sendString(str);
+            sendString(str);
             tilted = true;
         }
         if(joystickBuffer[1] > 13000 && !tilted){
             printf("upup\n");
             char str[4] = {'u', 'p', 'u', 'p','\0'};
-            //sendString(str);
+            sendString(str);
             tilted = true;
         }
         if(joystickBuffer[1] < 500 && !tilted){
             printf("down \n");
             char str[4] = {'d', 'o', 'w', 'n','\0'};
-            //sendString(str);
+            sendString(str);
             tilted = true;
         }
         if(isInIdleState(joystickBuffer[0]) && isInIdleState(joystickBuffer[1])){
@@ -333,7 +332,6 @@ void ADC14_IRQHandler(void){
         }
     }
     //acceleometer reading
-    /*
     if (status & ADC_INT2){
         accelerometer_z_axis = ADC14_getResult(ADC_MEM2);
         bool up_condition = accelerometer_z_axis> 14000;
@@ -347,5 +345,4 @@ void ADC14_IRQHandler(void){
             _delay_cycles(5000000);
         }
     }
-    */
 }
