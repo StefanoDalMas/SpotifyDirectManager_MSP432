@@ -28,12 +28,14 @@ void setup() {
   Serial.begin(baud_rate);
   Serial2.begin(baud_rate,SERIAL_8N1,RX,TX); //define serial channel
   //Disconnect from previous AP
+  /*
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
   delay(100);
   scanWiFi(); //checks WiFi APs available
   initWiFi(); //connect to desired AP
   value = String("");
+  */
   Serial.println("Setup completed :P");
   //Serial.println("Press g to perform GET, p to perform \"pause\" and n to perform \"next\" \n"); andy frocio
 }
@@ -48,6 +50,7 @@ void loop() {
   //NEW 
   readdata();
   // SCRIVE
+  /*
   while(Serial.available()){
     chr = Serial.read();
     if (chr == 't'){
@@ -65,9 +68,10 @@ void loop() {
       acked = false;
     }
   }
+  */
 }
 
-
+/* WIFI RELATED
 void performHTTP(String url, mode m){
   if(WiFi.status() == WL_CONNECTED){
     HTTPClient http;
@@ -156,6 +160,7 @@ void initWiFi(){
   Serial.print("\n Connected to AP ");
   Serial.println(WiFi.localIP());  
 }
+*/
 
 
 void readdata(){
@@ -164,8 +169,11 @@ void readdata(){
       if(chr >='a' && chr <= 'z'){
         value.concat(chr);
       }
-      Serial.print("La stringa atm è ");
+      if (strcmp(value.c_str(), "") != 0){
+        Serial.print("La stringa atm è ");
       Serial.println(value);
+      }
+      
       if (value.compareTo("prev") == 0){
         Serial.println("HO VISTOOOOOO prev\n\n");
         value = String("");
