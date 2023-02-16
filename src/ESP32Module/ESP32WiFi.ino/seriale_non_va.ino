@@ -8,18 +8,20 @@
 
 const char* ssid = "iPhone di Stefano"; //insert here
 const char* password = "oo8uki1diy6jy"; //insert here
-const char* token = "Bearer "; //remember to create and add token
+const char* token = "Bearer BQCiWAnOT_UxmkgudSofgRmDrh6L_dJHHRccSveqiii74KQHWT-4LwjOu9ItZJIlRwlImaGiw7wN6RIZM-Y6akn32_0j0FbS6A-YjpmMjefbDmIXFaDlzq3jyroMf0P6GL2ZrnnTGgT7FMSob8iWSK3hpIez4TDdHA9IfsUiVfBEsxcjE_ruGQTy7j_lOpX5mR1JbA"; //remember to create and add token
 const char* spotify_base_url = "https://api.spotify.com/v1/me";
 const int baud_rate = 115200;
 
-
 bool acked = false;
+int volume = 50;
 char chr;
 char jsonOutput[128];
 String value;
+
 enum mode{
   GET, POST, PUT
 };
+void performHTTP(String url, mode m);
 
 
 
@@ -28,50 +30,79 @@ void setup() {
   Serial.begin(baud_rate);
   Serial2.begin(baud_rate,SERIAL_8N1,RX,TX); //define serial channel
   //Disconnect from previous AP
-  /*
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
   delay(100);
   scanWiFi(); //checks WiFi APs available
   initWiFi(); //connect to desired AP
   value = String("");
-  */
+  performHTTP("/player/volume?volume_percent=50",PUT);
   Serial.println("Setup completed :P");
   //Serial.println("Press g to perform GET, p to perform \"pause\" and n to perform \"next\" \n"); andy frocio
 }
 
 void loop() {
-  //OLD 
-
-    // performHTTP("/player/devices",GET);
-    // performHTTP("/player/volume?volume_percent=70",PUT);
-    // performHTTP("/player/pause",PUT);
-    // performHTTP("/player/next",POST);
-  //NEW 
-  readdata();
-  // SCRIVE
-  /*
-  while(Serial.available()){
-    chr = Serial.read();
-    if (chr == 't'){
-      Serial2.write('c');
-      while(Serial2.available() && !acked){
-        char ack = Serial2.read();
-        if (ack == '%'){
-          acked = true;
-        }
+  while(Serial2.available()){
+      chr = Serial2.read();
+      if(chr >='a' && chr <='z'){
+        value.concat(chr);
       }
-      Serial2.write('i');
-
+      if (strcmp(value.c_str(), "") != 0){
+        Serial.print("La stringa atm è ");
+        Serial.println(value);
+      }
       
-      Serial.println("Data sent");  
-      acked = false;
+      if (value.compareTo("prev") == 0){
+        performHTTP("/player/previous",POST);
+        Serial.println("HO VISTOOOOOO prev\n\n");
+        value = String("");
+        Serial2.write('%');
+      }
+      else if (value.compareTo("next") == 0){
+        performHTTP("/player/next",POST);
+        Serial.println("HO VISTOOOOOO next\n\n");
+        value = String("");
+        Serial2.write('%');
+      }
+      else if (value.compareTo("upup") == 0){
+        if (volume <100){
+          volume +=10;
+          String set = "/player/volume?volume_percent=";
+          set.concat(volume);
+          performHTTP(set,PUT);
+        }
+        Serial.println("HO VISTOOOOOO upup\n\n");
+        value = String("");
+        Serial2.write('%');
+      }
+      else if (value.compareTo("down") == 0){
+        if (volume > 0){
+          volume -= 10;
+          String set = "/player/volume?volume_percent=";
+          set.concat(volume);
+          performHTTP(set,PUT);
+        }
+        Serial.println("HO VISTOOOOOO down\n\n");
+        value = String("");
+        Serial2.write('%');
+      }
+      else if (value.compareTo("play") == 0){
+        performHTTP("/player/play",PUT);
+        Serial.println("HO VISTOOOOOO play\n\n");
+        value = String("");
+        Serial2.write('%');
+      }
+      else if (value.compareTo("stop") == 0){
+        performHTTP("/player/pause",PUT);
+        Serial.println("HO VISTOOOOOO stop\n\n");
+        value = String(""); 
+        Serial2.write('%');
+      }  
     }
-  }
-  */
+    value = String("");
 }
 
-/* WIFI RELATED
+
 void performHTTP(String url, mode m){
   if(WiFi.status() == WL_CONNECTED){
     HTTPClient http;
@@ -81,7 +112,7 @@ void performHTTP(String url, mode m){
     http.addHeader("Authorization",token);
     http.addHeader("Content-Type", "application/json");
 
-    int httpcode;  
+    int httpcode; 
     switch (m) {
       case GET:
         httpcode = http.GET();
@@ -159,53 +190,4 @@ void initWiFi(){
   }
   Serial.print("\n Connected to AP ");
   Serial.println(WiFi.localIP());  
-}
-*/
-
-
-void readdata(){
-  while(Serial2.available()){
-      chr = Serial2.read();
-      if(chr >='a' && chr <= 'z'){
-        value.concat(chr);
-      }
-      if (strcmp(value.c_str(), "") != 0){
-        Serial.print("La stringa atm è ");
-      Serial.println(value);
-      }
-      
-      if (value.compareTo("prev") == 0){
-        Serial.println("HO VISTOOOOOO prev\n\n");
-        value = String("");
-        Serial2.write('%');
-      }
-      else if (value.compareTo("next") == 0){
-        Serial.println("HO VISTOOOOOO next\n\n");
-        value = String("");
-        Serial2.write('%');
-      }
-      else if (value.compareTo("upup") == 0){
-        Serial.println("HO VISTOOOOOO upup\n\n");
-        value = String("");
-        Serial2.write('%');
-      }
-      else if (value.compareTo("down") == 0){
-        Serial.println("HO VISTOOOOOO down\n\n");
-        value = String("");
-        Serial2.write('%');
-      }
-      else if (value.compareTo("play") == 0){
-        Serial.println("HO VISTOOOOOO play\n\n");
-        value = String("");
-        Serial2.write('%');
-      }
-      else if (value.compareTo("stop") == 0){
-        Serial.println("HO VISTOOOOOO stop\n\n");
-        value = String(""); 
-        Serial2.write('%');
-      }
-      
-      
-    }
-    value = String("");
 }
