@@ -12,7 +12,10 @@
 #include <stdbool.h>
 
 #define SCREEN_MAXWIDTH 128
+#define MAX_VOLUME 100
+#define MIN_VOLUME 0
 #define TIMER_PERIOD 0x2400 // 9216 / 32700 = 0.33s
+#define MAX_TIME_PERIOD_SHOW_BAR 6
 
 
 //LCD
@@ -32,11 +35,14 @@ static uint16_t accelerometer_z_axis;
 
 
 //All images in image.c careful don't open it
-Graphics_Image spotify_logos[11];
+Graphics_Image spotify_logos[12];
 int32_t rotation = 0;
 int32_t slide_value =SCREEN_MAXWIDTH;
 bool playing = false; //tell if the image has to be rotated or not
-
+int32_t volume = 50;
+const int32_t VOLUME_BAR_POSITION_X = 14;
+bool changed = false;
+int32_t show_bar_counter = MAX_TIME_PERIOD_SHOW_BAR;
 
 
 
@@ -249,6 +255,7 @@ void logosinit(){
     spotify_logos[8] = spotify_image8;
     spotify_logos[9] = spotify_image9;
     spotify_logos[10] = spotify_image10;
+    spotify_logos[11] = spotify_image11;
 
 }
 
@@ -257,7 +264,25 @@ void drawscreen(int32_t slide_value,int32_t rotation){
     //making text slide
     Graphics_drawStringCentered(&g_sContext, (int8_t *) "Hello", AUTO_STRING_LENGTH,slide_value, 60, OPAQUE_TEXT);
     Graphics_drawImage(&g_sContext,&spotify_logos[rotation],0,0);
-    //Graphics_drawLine(&g_sContext,10,50,90,50); just to test
+    //Volume bar
+    tRectangle rect_volume = {VOLUME_BAR_POSITION_X,102,VOLUME_BAR_POSITION_X + volume,114};
+    tRectangle delete_rect = {VOLUME_BAR_POSITION_X,102,128,114};
+    //Delete old one only if it is not the same
+    if (changed){
+        GrContextForegroundSet(&g_sContext, ClrBlack);
+        GrRectFill(&g_sContext, &delete_rect);
+        GrFlush(&g_sContext);
+        GrContextForegroundSet(&g_sContext, 0x00ff00);
+        GrRectFill(&g_sContext, &rect_volume);
+        GrContextForegroundSet(&g_sContext, ClrWhite);
+        changed = false;
+        show_bar_counter = MAX_TIME_PERIOD_SHOW_BAR;
+    }
+    if (show_bar_counter == 0){
+        GrContextForegroundSet(&g_sContext, ClrBlack);
+        GrRectFill(&g_sContext, &delete_rect);
+        GrContextForegroundSet(&g_sContext, ClrWhite);
+    }
     GrFlush(&g_sContext);
 }
 
@@ -275,11 +300,10 @@ int main(void){
 
 void TA1_0_IRQHandler(void){
         Timer_A_clearCaptureCompareInterrupt(TIMER_A1_BASE,TIMER_A_CAPTURECOMPARE_REGISTER_0);
-        printf("DIO Can %d\n",slide_value);
+        //printf("DIO Can %d\n",slide_value);
         drawscreen(slide_value,rotation);
-        printf("%d\n",slide_value);
+        
         slide_value--;
-        printf("%d\n",slide_value);
         if (slide_value == 0){
             printf("Resizing\n");
             GrContextForegroundSet(&g_sContext, ClrBlack);
@@ -295,6 +319,9 @@ void TA1_0_IRQHandler(void){
             if (rotation == 11){
                 rotation = 0;
             }
+        }
+        if (show_bar_counter > 0){
+            show_bar_counter--;
         }
 }
 
@@ -323,14 +350,14 @@ void PORT5_IRQHandler(){
     GPIO_clearInterruptFlag(GPIO_PORT_P5,status);
     if (status & GPIO_PIN1){
         if (playing){
-            //char str[4] = {'s','t','o','p'};
-            //sendString(str);
+            char str[4] = {'s','t','o','p'};
+            sendString(str);
             printf("stop\n");
             playing = false;
         }
         else{
-            //char str[4] = {'p','l','a','y'};
-            //sendString(str);
+            char str[4] = {'p','l','a','y'};
+            sendString(str);
             printf("play\n");
             playing = true;
         }
@@ -384,12 +411,20 @@ void ADC14_IRQHandler(void){
             printf("upup\n");
             char str[4] = {'u', 'p', 'u', 'p','\0'};
             sendString(str);
+            if (volume < MAX_VOLUME){
+                volume+=10;
+                changed = true;
+            }
             tilted = true;
         }
         if(joystickBuffer[1] < 500 && !tilted){
             printf("down \n");
             char str[4] = {'d', 'o', 'w', 'n','\0'};
             sendString(str);
+            if (volume > MIN_VOLUME){
+                volume -= 10;
+                changed = true;
+            }
             tilted = true;
         }
         if(isInIdleState(joystickBuffer[0]) && isInIdleState(joystickBuffer[1])){
