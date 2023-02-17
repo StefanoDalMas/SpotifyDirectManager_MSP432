@@ -361,41 +361,6 @@ void TA1_0_IRQHandler(void){
         }
 }
 
-/* check this one yikes
-#define MAX_CHUNK 64
-uint8_t chunk[MAX_CHUNK + 4];
-int count = 0;
-EUSCI A0 UART ISR - Echos data back to PC host
-void EUSCIA2_IRQHandler(void)
-{
-    uint32_t status = UART_getEnabledInterruptStatus(EUSCI_A2_BASE);                               
-
-    if(status & EUSCI_A_UART_RECEIVE_INTERRUPT_FLAG)
-    {
-        RXData = UART_receiveData(EUSCI_A2_BASE);
-        if(RXData == "reset"){ // primo carattere
-            count = 0;
-            nextReads = true;
-        }
-        if(nextReads){
-            chunk[count++] = RXData;
-            if(count > MAX_CHUNK){
-                //received chunk
-                nextReads = false;
-                chunk[MAX_CHUNK+1] =".";
-                chunk[MAX_CHUNK+2] =".";
-                chunk[MAX_CHUNK+3] =".";
-            }
-        }
-        printf("received from uart %d\n", RXData);
-        fflush(stdout);
-
-        Interrupt_disableSleepOnIsrExit();
-    }
-    
-}
-*/
-//Old one
 void EUSCIA2_IRQHandler(void)
 {
     uint32_t status = UART_getEnabledInterruptStatus(EUSCI_A2_BASE);                               
