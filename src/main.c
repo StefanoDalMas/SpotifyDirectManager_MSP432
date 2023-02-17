@@ -32,16 +32,22 @@ char str[4];
 //ADC conversion
 static uint16_t joystickBuffer[2];
 static uint16_t accelerometer_z_axis;
+//Joystick reading
+bool tilted = false;
+//Button reading
+bool token = false;
 
 
 //All images in image.c careful don't open it
 Graphics_Image spotify_logos[12];
 int32_t rotation = 0;
 int32_t slide_value =SCREEN_MAXWIDTH;
-bool playing = false; //tell if the image has to be rotated or not
-int32_t volume = 50;
+//syncronization
+volatile bool playing = false; //tell if the image has to be rotated or not
+volatile int32_t volume = 50;
+volatile bool changed = false;
+//draw image
 const int32_t VOLUME_BAR_POSITION_X = 14;
-bool changed = false;
 int32_t show_bar_counter = MAX_TIME_PERIOD_SHOW_BAR;
 
 
@@ -52,6 +58,7 @@ int32_t show_bar_counter = MAX_TIME_PERIOD_SHOW_BAR;
  * at:
  * http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/MSP430BaudRateConverter/index.html
  */
+//mmhhh... could use 2 uart
 const eUSCI_UART_ConfigV1 uartConfig =
 {
         EUSCI_A_UART_CLOCKSOURCE_SMCLK,          // SMCLK Clock Source
@@ -59,7 +66,7 @@ const eUSCI_UART_ConfigV1 uartConfig =
         0,                                       // UCxBRF = 0
         111,//37,                                      // UCxBRS = 37
         EUSCI_A_UART_NO_PARITY,                  // No Parity
-        EUSCI_A_UART_LSB_FIRST,                  // MSB First
+        EUSCI_A_UART_LSB_FIRST,                  // LSB First
         EUSCI_A_UART_ONE_STOP_BIT,               // One stop bit
         EUSCI_A_UART_MODE,                       // UART mode
         EUSCI_A_UART_OVERSAMPLING_BAUDRATE_GENERATION,  // Oversampling
@@ -113,6 +120,15 @@ void setUpButtons(){
     Interrupt_enableMaster();
 }
 
+
+bool consumetoken(){
+    if (token){
+        token = false;
+        return true;
+    }
+    return false;
+}
+
 void _adcInit(){
     /* Configures Pin 6.0 and 4.4 as ADC input for the jotstick*/
         GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P6, GPIO_PIN0, GPIO_TERTIARY_MODULE_FUNCTION);
@@ -159,6 +175,7 @@ void _adcInit(){
         ADC14_toggleConversionTrigger();
 }
 
+//UART 
 void sendString(char* str) {
     while(*str != '\0') {
         UART_transmitData(EUSCI_A2_BASE, *str);
@@ -290,6 +307,7 @@ void drawscreen(int32_t slide_value,int32_t rotation){
 int main(void){
     _hwinit();
     logosinit();
+
     while(1)
     {
         Interrupt_enableSleepOnIsrExit();
@@ -300,19 +318,37 @@ int main(void){
 
 void TA1_0_IRQHandler(void){
         Timer_A_clearCaptureCompareInterrupt(TIMER_A1_BASE,TIMER_A_CAPTURECOMPARE_REGISTER_0);
-        //printf("DIO Can %d\n",slide_value);
+        //if button was pressed update the state
+        if (consumetoken()){
+            if (playing){
+                //char str[4] = {'s','t','o','p','\0'};
+                char str[5] = "stop";
+                sendString(str);
+                printf("stop\n");
+                playing = false;
+            }
+            else{
+                // char str[4] = {'p','l','a','y'};
+                char str[5] = "play";
+                sendString(str);
+                printf("play\n");
+                playing = true;
+            }
+        }
+
         drawscreen(slide_value,rotation);
         
         slide_value--;
         if (slide_value == 0){
             printf("Resizing\n");
             GrContextForegroundSet(&g_sContext, ClrBlack);
-            tRectangle rect = {0,55,128,80}; //create a rectangle that covers 0-128 x 55-80
+            tRectangle rect = {0,55,128,80}; //x0,y0,x1,y1
             GrRectFill(&g_sContext, &rect);
             GrFlush(&g_sContext);
             GrContextForegroundSet(&g_sContext, ClrWhite);
             slide_value = SCREEN_MAXWIDTH;
         }
+        
         //if the device is playing, rotate the logo
         if (playing){
             rotation++;
@@ -325,42 +361,66 @@ void TA1_0_IRQHandler(void){
         }
 }
 
-/* EUSCI A0 UART ISR - Echos data back to PC host */
+/* check this one yikes
+#define MAX_CHUNK 64
+uint8_t chunk[MAX_CHUNK + 4];
+int count = 0;
+EUSCI A0 UART ISR - Echos data back to PC host
 void EUSCIA2_IRQHandler(void)
 {
-    uint32_t status = UART_getEnabledInterruptStatus(EUSCI_A2_BASE);
+    uint32_t status = UART_getEnabledInterruptStatus(EUSCI_A2_BASE);                               
 
     if(status & EUSCI_A_UART_RECEIVE_INTERRUPT_FLAG)
     {
         RXData = UART_receiveData(EUSCI_A2_BASE);
-        printf("%c\n", RXData);
-        UART_transmitData(EUSCI_A2_BASE,'%');
+        if(RXData == "reset"){ // primo carattere
+            count = 0;
+            nextReads = true;
+        }
+        if(nextReads){
+            chunk[count++] = RXData;
+            if(count > MAX_CHUNK){
+                //received chunk
+                nextReads = false;
+                chunk[MAX_CHUNK+1] =".";
+                chunk[MAX_CHUNK+2] =".";
+                chunk[MAX_CHUNK+3] =".";
+            }
+        }
+        printf("received from uart %d\n", RXData);
+        fflush(stdout);
 
         Interrupt_disableSleepOnIsrExit();
     }
+    
+}
+*/
+//Old one
+void EUSCIA2_IRQHandler(void)
+{
+    uint32_t status = UART_getEnabledInterruptStatus(EUSCI_A2_BASE);                               
 
+    if(status & EUSCI_A_UART_RECEIVE_INTERRUPT_FLAG)
+    {
+        RXData = UART_receiveData(EUSCI_A2_BASE);
+        printf("received from uart %d\n", RXData);
+        fflush(stdout);    
+
+        Interrupt_disableSleepOnIsrExit();
+    }
+    
 }
 
-//Button handlers
 
+
+//Button handlers
 
 
 void PORT5_IRQHandler(){
     uint_fast16_t status = GPIO_getEnabledInterruptStatus(GPIO_PORT_P5);
     GPIO_clearInterruptFlag(GPIO_PORT_P5,status);
     if (status & GPIO_PIN1){
-        if (playing){
-            char str[4] = {'s','t','o','p'};
-            sendString(str);
-            printf("stop\n");
-            playing = false;
-        }
-        else{
-            char str[4] = {'p','l','a','y'};
-            sendString(str);
-            printf("play\n");
-            playing = true;
-        }
+        token = true;
     }
 }
 
@@ -380,7 +440,8 @@ bool isInIdleState(int x){
     return ((x>7000) && (x<9000));
 }
 
-bool tilted = false;
+
+
 //ADC for joystick and accelerometer
 void ADC14_IRQHandler(void){
     uint64_t status;
@@ -397,19 +458,22 @@ void ADC14_IRQHandler(void){
         //I need 2 bools to check if the joystick is tilted in a certain direction
         if(joystickBuffer[0] > 13000 && !tilted){
             printf("next\n");
-            char str[4] = {'n', 'e', 'x', 't','\0'};
+            // char str[4] = {'n', 'e', 'x', 't','\0'};
+            char str[5] = "next";
             sendString(str);
             tilted = true;
         }
         if(joystickBuffer[0] < 3500 && !tilted){
             printf("prev\n");
-            char str[4] = {'p', 'r', 'e', 'v','\0'};
+            // char str[4] = {'p', 'r', 'e', 'v','\0'};
+            char str[5] = "prev";
             sendString(str);
             tilted = true;
         }
         if(joystickBuffer[1] > 13000 && !tilted){
             printf("upup\n");
-            char str[4] = {'u', 'p', 'u', 'p','\0'};
+            // char str[4] = {'u', 'p', 'u', 'p','\0'};
+            char str[5] = "upup";
             sendString(str);
             if (volume < MAX_VOLUME){
                 volume+=10;
@@ -419,7 +483,8 @@ void ADC14_IRQHandler(void){
         }
         if(joystickBuffer[1] < 500 && !tilted){
             printf("down \n");
-            char str[4] = {'d', 'o', 'w', 'n','\0'};
+            // char str[4] = {'d', 'o', 'w', 'n','\0'};
+            char str[5] = "down";
             sendString(str);
             if (volume > MIN_VOLUME){
                 volume -= 10;
@@ -448,4 +513,3 @@ void ADC14_IRQHandler(void){
     }
     */
 }
-
