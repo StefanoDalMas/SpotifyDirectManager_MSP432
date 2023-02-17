@@ -58,17 +58,15 @@ void loop() {
         if (INTERNET_ACTIVE){
           performHTTP("/player/previous",POST); 
         }
-        Serial.println("HO VISTOOOOOO prev\n\n");
+        Serial.println("HO VISTOOOOOO prev\n");
         value = String("");
-        Serial2.write('%');
       }
       else if (value.compareTo("next") == 0){
         if (INTERNET_ACTIVE){
           performHTTP("/player/next",POST);          
         }
-        Serial.println("HO VISTOOOOOO next\n\n");
+        Serial.println("HO VISTOOOOOO next\n");
         value = String("");
-        Serial2.write('%');
       }
       else if (value.compareTo("upup") == 0){
         if (volume <100){
@@ -79,9 +77,8 @@ void loop() {
             performHTTP(set,PUT);
           }          
         }
-        Serial.println("HO VISTOOOOOO upup\n\n");
+        Serial.println("HO VISTOOOOOO upup\n");
         value = String("");
-        Serial2.write('%');
       }
       else if (value.compareTo("down") == 0){
         if (volume > 0){
@@ -92,25 +89,22 @@ void loop() {
             performHTTP(set,PUT);
           }
         }
-        Serial.println("HO VISTOOOOOO down\n\n");
+        Serial.println("HO VISTOOOOOO down\n");
         value = String("");
-        Serial2.write('%');
       }
       else if (value.compareTo("play") == 0){
         if (INTERNET_ACTIVE){
           performHTTP("/player/play",PUT);
         }
-        Serial.println("HO VISTOOOOOO play\n\n");
+        Serial.println("HO VISTOOOOOO play\n");
         value = String("");
-        Serial2.write('%');
       }
       else if (value.compareTo("stop") == 0){
         if (INTERNET_ACTIVE){
         performHTTP("/player/pause",PUT);
         }
-        Serial.println("HO VISTOOOOOO stop\n\n");
-        value = String(""); 
-        Serial2.write('%');
+        Serial.println("HO VISTOOOOOO stop\n");
+        value = String("");
       }  
     }
   }
