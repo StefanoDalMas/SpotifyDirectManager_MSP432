@@ -24,6 +24,11 @@ char chr;
 char jsonOutput[128];
 String value;
 
+//Uart sending strings don't touch or it will explode
+int timer =1;
+char c;
+String send; //REMEMBER TO ADD SENTINEL VALUE # aka 35 ascii
+
 enum mode{
   GET, POST, PUT
 };
@@ -59,27 +64,27 @@ void loop() {
           performHTTP("/player/previous",POST); 
         }
         Serial.println("HO VISTOOOOOO prev\n");
+        send = String("author name 1#");
+        sendString(send);
+        //now the songname
+        send = String("song name 1#");
+        delay(100); //make sure msp received and copied the string
+        sendString(send);
+        send = String("");
         value = String("");
-        Serial2.write("Cazzinellabocca");
       }
       else if (value.compareTo("next") == 0){
         if (INTERNET_ACTIVE){
           performHTTP("/player/next",POST);          
         }
         Serial.println("HO VISTOOOOOO next\n");
-        char c;
-        int timer=1;
-        String send = String("Madonna ipertroia#");
-        for(int i=0; i<send.length();i++){
-          c = send.charAt(i);
-          Serial2.write(c);
-          timer--;
-          if (timer ==0 ){
-            String tmp = Serial2.readStringUntil('%');
-            Serial.println(tmp);
-            timer = 1;
-          }
-        }
+        //Authorname
+        send = String("author name 2#");
+        sendString(send);
+        delay(100); //make sure msp received and copied the string
+        //Now the songname
+        send = String("song name 2#");
+        sendString(send);
         send = String("");
         value = String("");
       }
@@ -126,7 +131,18 @@ void loop() {
     value = String("");
 }
 
-
+void sendString(String send){
+  for(int i=0; i<send.length();i++){
+    c = send.charAt(i);
+    Serial2.write(c);
+    timer--;
+    if (timer == 0 ){
+      String tmp = Serial2.readStringUntil('%');
+      Serial.println(tmp);
+      timer = 1;
+    }
+  }
+}
 
 void performHTTP(String url, mode m){
   if(WiFi.status() == WL_CONNECTED){
