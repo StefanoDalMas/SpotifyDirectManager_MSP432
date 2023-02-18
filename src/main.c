@@ -28,6 +28,13 @@ uint8_t RXData = 0;
 uint8_t data_received[10];
 int counter = 0;
 char str[4];
+//String sending
+#define MAX_SIZE_READ 64
+uint8_t readBuffer[MAX_SIZE_READ];
+int count = 0;
+int ack = 1;
+uint8_t AuthorName[MAX_SIZE_READ];
+uint8_t SongName[MAX_SIZE_READ];//HAVEN't USED YET
 
 //ADC conversion
 static uint16_t joystickBuffer[2];
@@ -37,6 +44,8 @@ bool tilted = false;
 //Button reading
 bool token = false;
 
+//Idk where to put this one lol
+bool stringChanged = false;
 
 //All images in image.c careful don't open it
 Graphics_Image spotify_logos[12];
@@ -274,10 +283,19 @@ void logosinit(){
     spotify_logos[11] = spotify_image11;
 }
 
-
 void drawscreen(int32_t slide_value,int32_t rotation){
     //making text slide
-    Graphics_drawStringCentered(&g_sContext, (int8_t *) "Hello", AUTO_STRING_LENGTH,slide_value, 60, OPAQUE_TEXT);
+    if (stringChanged){
+        //Delete old stirng
+        GrContextForegroundSet(&g_sContext, ClrBlack);
+        tRectangle delete_rect = {0,80,128,50};
+        GrRectFill(&g_sContext, &delete_rect);
+        GrContextForegroundSet(&g_sContext, ClrWhite);
+        //place new one
+        Graphics_drawStringCentered(&g_sContext, (int8_t *) AuthorName, AUTO_STRING_LENGTH,slide_value, 60, OPAQUE_TEXT);
+        stringChanged = false;
+    }
+    Graphics_drawStringCentered(&g_sContext, (int8_t *) AuthorName, AUTO_STRING_LENGTH,slide_value, 60, OPAQUE_TEXT);
     Graphics_drawImage(&g_sContext,&spotify_logos[rotation],0,0);
     //Volume bar
     tRectangle rect_volume = {VOLUME_BAR_POSITION_X,102,VOLUME_BAR_POSITION_X + volume,114};
@@ -301,10 +319,26 @@ void drawscreen(int32_t slide_value,int32_t rotation){
     GrFlush(&g_sContext);
 }
 
+void setmetadata(){
+    //Set authorname to "Hello" and Song name to "World"
+    AuthorName[1] = 'H';
+    AuthorName[2] = 'e';
+    AuthorName[3] = 'l';
+    AuthorName[4] = 'l';
+    AuthorName[5] = 'o';
+    AuthorName[6] = '\0';
+    SongName[1] = 'W';
+    SongName[2] = 'o';
+    SongName[3] = 'r';
+    SongName[4] = 'l';
+    SongName[5] = 'd';
+    SongName[6] = '\0';
+}
 
 int main(void){
     _hwinit();
     logosinit();
+    setmetadata();
 
     while(1)
     {
@@ -314,19 +348,18 @@ int main(void){
 }
 
 
+
 void TA1_0_IRQHandler(void){
         Timer_A_clearCaptureCompareInterrupt(TIMER_A1_BASE,TIMER_A_CAPTURECOMPARE_REGISTER_0);
         //if button was pressed update the state
         if (consumetoken()){
             if (playing){
-                //char str[4] = {'s','t','o','p','\0'};
                 char str[5] = "stop";
                 sendString(str);
                 printf("stop\n");
                 playing = false;
             }
             else{
-                // char str[4] = {'p','l','a','y'};
                 char str[5] = "play";
                 sendString(str);
                 printf("play\n");
@@ -362,10 +395,7 @@ void TA1_0_IRQHandler(void){
 
 
 
-#define MAX_SIZE_READ 64
-uint8_t readBuffer[MAX_SIZE_READ];
-int count = 0;
-int ack = 1;
+
 
 void EUSCIA2_IRQHandler(void)
 {
@@ -385,13 +415,14 @@ void EUSCIA2_IRQHandler(void)
         }
         else{
             readBuffer[count] = '\0'; //close buffer
-            printf("received from uart ");
+            //copy contents from readBuffer to AuthorName
             int i=0;
-            while (readBuffer[i] !='\0'){
-                printf("%c",readBuffer[i]);
+            while (readBuffer[i] != '\0'){
+                AuthorName[i] = readBuffer[i];
                 i++;
             }
-            i=0;
+            AuthorName[i] = '\0'; //close buffer
+            stringChanged = true;
             fflush(stdout);
             count = 0;
         }
@@ -448,22 +479,19 @@ void ADC14_IRQHandler(void){
         //printf("x %d y %d\n",joystickBuffer[0],joystickBuffer[1]);
         //I need 2 bools to check if the joystick is tilted in a certain direction
         if(joystickBuffer[0] > 13000 && !tilted){
-            printf("next\n");
-            // char str[4] = {'n', 'e', 'x', 't','\0'};
+            printf("next\n");;
             char str[5] = "next";
             sendString(str);
             tilted = true;
         }
         if(joystickBuffer[0] < 3500 && !tilted){
             printf("prev\n");
-            // char str[4] = {'p', 'r', 'e', 'v','\0'};
             char str[5] = "prev";
             sendString(str);
             tilted = true;
         }
         if(joystickBuffer[1] > 13000 && !tilted){
             printf("upup\n");
-            // char str[4] = {'u', 'p', 'u', 'p','\0'};
             char str[5] = "upup";
             sendString(str);
             if (volume < MAX_VOLUME){
@@ -474,7 +502,6 @@ void ADC14_IRQHandler(void){
         }
         if(joystickBuffer[1] < 500 && !tilted){
             printf("down \n");
-            // char str[4] = {'d', 'o', 'w', 'n','\0'};
             char str[5] = "down";
             sendString(str);
             if (volume > MIN_VOLUME){
