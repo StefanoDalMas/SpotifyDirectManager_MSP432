@@ -272,7 +272,6 @@ void logosinit(){
     spotify_logos[9] = spotify_image9;
     spotify_logos[10] = spotify_image10;
     spotify_logos[11] = spotify_image11;
-
 }
 
 
@@ -354,50 +353,19 @@ void TA1_0_IRQHandler(void){
             if (rotation == 11){
                 rotation = 0;
             }
+            //rotation = (rotation + 1) % 11; from mp
         }
         if (show_bar_counter > 0){
             show_bar_counter--;
         }
 }
 
-/* check this one yikes
-#define MAX_CHUNK 64
-uint8_t chunk[MAX_CHUNK + 4];
-int count = 0;
-EUSCI A0 UART ISR - Echos data back to PC host
-void EUSCIA2_IRQHandler(void)
-{
-    uint32_t status = UART_getEnabledInterruptStatus(EUSCI_A2_BASE);                               
 
-    if(status & EUSCI_A_UART_RECEIVE_INTERRUPT_FLAG)
-    {
-        RXData = UART_receiveData(EUSCI_A2_BASE);
-        if(RXData == "reset"){ // primo carattere
-            count = 0;
-            nextReads = true;
-        }
-        if(nextReads){
-            chunk[count++] = RXData;
-            if(count > MAX_CHUNK){
-                //received chunk
-                nextReads = false;
-                chunk[MAX_CHUNK+1] =".";
-                chunk[MAX_CHUNK+2] =".";
-                chunk[MAX_CHUNK+3] =".";
-            }
-        }
-        printf("received from uart %d\n", RXData);
-        fflush(stdout);
-
-        Interrupt_disableSleepOnIsrExit();
-    }
-    
-}
-*/
 
 #define MAX_SIZE_READ 64
 uint8_t readBuffer[MAX_SIZE_READ];
 int count = 0;
+int ack = 1;
 
 void EUSCIA2_IRQHandler(void)
 {
@@ -406,19 +374,28 @@ void EUSCIA2_IRQHandler(void)
     if(status & EUSCI_A_UART_RECEIVE_INTERRUPT_FLAG)
     {
         RXData = UART_receiveData(EUSCI_A2_BASE);
-        /*
         if (RXData != '#'){
             readBuffer[count] = RXData;
             count++;
+            ack--;
+            if (ack ==0){
+                UART_transmitData(EUSCI_A2_BASE, '%');
+                ack = 1;
+            }
         }
         else{
             readBuffer[count] = '\0'; //close buffer
-            printf("received from uart %s\n", readBuffer);
+            printf("received from uart ");
+            int i=0;
+            while (readBuffer[i] !='\0'){
+                printf("%c",readBuffer[i]);
+                i++;
+            }
+            i=0;
             fflush(stdout);
             count = 0;
         }
-        */
-        printf("received from uart %d\n", RXData);
+        printf("received from uart %c\n", RXData);
         fflush(stdout);    
         Interrupt_disableSleepOnIsrExit();
     }
