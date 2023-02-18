@@ -14,7 +14,7 @@
 #define SCREEN_MAXWIDTH 128
 #define MAX_VOLUME 100
 #define MIN_VOLUME 0
-#define TIMER_PERIOD 0x2400 // 9216 / 32700 = 0.33s
+#define TIMER_PERIOD 0x1400 // 9216 / 32700 = 0.33s
 #define MAX_TIME_PERIOD_SHOW_BAR 6
 
 
@@ -30,11 +30,10 @@ int counter = 0;
 char str[4];
 //String sending
 #define MAX_SIZE_READ 64
-uint8_t readBuffer[MAX_SIZE_READ];
 int count = 0;
 int ack = 1;
-uint8_t AuthorName[MAX_SIZE_READ];
-uint8_t SongName[MAX_SIZE_READ];//HAVEN't USED YET
+uint8_t AuthorName[MAX_SIZE_READ] = "SpotifyDirectManager";
+uint8_t SongName[MAX_SIZE_READ] = "CAzzitestPalle";
 
 //ADC conversion
 static uint16_t joystickBuffer[2];
@@ -44,8 +43,10 @@ bool tilted = false;
 //Button reading
 bool token = false;
 
-//Idk where to put this one lol
-bool stringChanged = false;
+//Idk where to put this one lol its for the last part of UART
+bool authorChanged = false;
+bool songChanged = false;
+bool receivedAuthor = false;
 
 //All images in image.c careful don't open it
 Graphics_Image spotify_logos[12];
@@ -54,7 +55,7 @@ int32_t slide_value =SCREEN_MAXWIDTH;
 //syncronization
 volatile bool playing = false; //tell if the image has to be rotated or not
 volatile int32_t volume = 50;
-volatile bool changed = false;
+volatile bool volumeChanged = false;
 //draw image
 const int32_t VOLUME_BAR_POSITION_X = 14;
 int32_t show_bar_counter = MAX_TIME_PERIOD_SHOW_BAR;
@@ -283,33 +284,40 @@ void logosinit(){
     spotify_logos[11] = spotify_image11;
 }
 
+
+bool first = true;
+
 void drawscreen(int32_t slide_value,int32_t rotation){
-    //making text slide
-    if (stringChanged){
-        //Delete old stirng
+    if (authorChanged || songChanged){
+        tRectangle delete_text = {0,40, 128, 100};
         GrContextForegroundSet(&g_sContext, ClrBlack);
-        tRectangle delete_rect = {0,80,128,50};
-        GrRectFill(&g_sContext, &delete_rect);
+        GrRectFill(&g_sContext, &delete_text);
+        GrFlush(&g_sContext);
         GrContextForegroundSet(&g_sContext, ClrWhite);
-        //place new one
-        Graphics_drawStringCentered(&g_sContext, (int8_t *) AuthorName, AUTO_STRING_LENGTH,slide_value, 60, OPAQUE_TEXT);
-        stringChanged = false;
+        if (authorChanged) {
+            authorChanged = false;
+        }
+        if (songChanged) {
+            songChanged = false;
+        }
     }
+    //making text slide
     Graphics_drawStringCentered(&g_sContext, (int8_t *) AuthorName, AUTO_STRING_LENGTH,slide_value, 60, OPAQUE_TEXT);
+    Graphics_drawStringCentered(&g_sContext, (int8_t *) SongName, AUTO_STRING_LENGTH,slide_value, 80, OPAQUE_TEXT);
     Graphics_drawImage(&g_sContext,&spotify_logos[rotation],0,0);
     //Volume bar
-    tRectangle rect_volume = {VOLUME_BAR_POSITION_X,102,VOLUME_BAR_POSITION_X + volume,114};
+    tRectangle rect_volume = {VOLUME_BAR_POSITION_X,102,VOLUME_BAR_POSITION_X + volume,114}; 
     tRectangle delete_rect = {VOLUME_BAR_POSITION_X,102,128,114};
     //Delete old one only if it is not the same
-    if (changed){
+    if (volumeChanged){
         GrContextForegroundSet(&g_sContext, ClrBlack);
         GrRectFill(&g_sContext, &delete_rect);
         GrFlush(&g_sContext);
         GrContextForegroundSet(&g_sContext, 0x00ff00);
         GrRectFill(&g_sContext, &rect_volume);
         GrContextForegroundSet(&g_sContext, ClrWhite);
-        changed = false;
         show_bar_counter = MAX_TIME_PERIOD_SHOW_BAR;
+        volumeChanged = false;
     }
     if (show_bar_counter == 0){
         GrContextForegroundSet(&g_sContext, ClrBlack);
@@ -319,26 +327,10 @@ void drawscreen(int32_t slide_value,int32_t rotation){
     GrFlush(&g_sContext);
 }
 
-void setmetadata(){
-    //Set authorname to "Hello" and Song name to "World"
-    AuthorName[1] = 'H';
-    AuthorName[2] = 'e';
-    AuthorName[3] = 'l';
-    AuthorName[4] = 'l';
-    AuthorName[5] = 'o';
-    AuthorName[6] = '\0';
-    SongName[1] = 'W';
-    SongName[2] = 'o';
-    SongName[3] = 'r';
-    SongName[4] = 'l';
-    SongName[5] = 'd';
-    SongName[6] = '\0';
-}
 
 int main(void){
     _hwinit();
     logosinit();
-    setmetadata();
 
     while(1)
     {
@@ -373,7 +365,7 @@ void TA1_0_IRQHandler(void){
         if (slide_value == 0){
             printf("Resizing\n");
             GrContextForegroundSet(&g_sContext, ClrBlack);
-            tRectangle rect = {0,55,128,80}; //x0,y0,x1,y1
+            tRectangle rect = {0,40,128,100}; //x0,y0,x1,y1
             GrRectFill(&g_sContext, &rect);
             GrFlush(&g_sContext);
             GrContextForegroundSet(&g_sContext, ClrWhite);
@@ -382,11 +374,7 @@ void TA1_0_IRQHandler(void){
         
         //if the device is playing, rotate the logo
         if (playing){
-            rotation++;
-            if (rotation == 11){
-                rotation = 0;
-            }
-            //rotation = (rotation + 1) % 11; from mp
+            rotation = (rotation + 1) % 11;
         }
         if (show_bar_counter > 0){
             show_bar_counter--;
@@ -405,7 +393,12 @@ void EUSCIA2_IRQHandler(void)
     {
         RXData = UART_receiveData(EUSCI_A2_BASE);
         if (RXData != '#'){
-            readBuffer[count] = RXData;
+            if (!receivedAuthor){
+                AuthorName[count] = RXData;
+            }
+            else{
+                SongName[count] = RXData;
+            }
             count++;
             ack--;
             if (ack ==0){
@@ -414,17 +407,20 @@ void EUSCIA2_IRQHandler(void)
             }
         }
         else{
-            readBuffer[count] = '\0'; //close buffer
-            //copy contents from readBuffer to AuthorName
-            int i=0;
-            while (readBuffer[i] != '\0'){
-                AuthorName[i] = readBuffer[i];
-                i++;
+            if (!receivedAuthor){
+                AuthorName[count] = '\0';
+                receivedAuthor = true;
+                authorChanged = true;
             }
-            AuthorName[i] = '\0'; //close buffer
-            stringChanged = true;
-            fflush(stdout);
+            else{
+                SongName[count] = '\0';
+                receivedAuthor = false;
+                songChanged = true;
+            }
             count = 0;
+        }
+        if (authorChanged && songChanged){
+            first = false;
         }
         printf("received from uart %c\n", RXData);
         fflush(stdout);    
@@ -479,16 +475,18 @@ void ADC14_IRQHandler(void){
         //printf("x %d y %d\n",joystickBuffer[0],joystickBuffer[1]);
         //I need 2 bools to check if the joystick is tilted in a certain direction
         if(joystickBuffer[0] > 13000 && !tilted){
-            printf("next\n");;
+            printf("next\n");
             char str[5] = "next";
             sendString(str);
             tilted = true;
+            playing = true;
         }
         if(joystickBuffer[0] < 3500 && !tilted){
             printf("prev\n");
             char str[5] = "prev";
             sendString(str);
             tilted = true;
+            playing = true;
         }
         if(joystickBuffer[1] > 13000 && !tilted){
             printf("upup\n");
@@ -496,7 +494,7 @@ void ADC14_IRQHandler(void){
             sendString(str);
             if (volume < MAX_VOLUME){
                 volume+=10;
-                changed = true;
+                volumeChanged = true;
             }
             tilted = true;
         }
@@ -506,7 +504,7 @@ void ADC14_IRQHandler(void){
             sendString(str);
             if (volume > MIN_VOLUME){
                 volume -= 10;
-                changed = true;
+                volumeChanged = true;
             }
             tilted = true;
         }
