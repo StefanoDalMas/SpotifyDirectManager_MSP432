@@ -60,12 +60,27 @@ void loop() {
         }
         Serial.println("HO VISTOOOOOO prev\n");
         value = String("");
+        Serial2.write("Cazzinellabocca");
       }
       else if (value.compareTo("next") == 0){
         if (INTERNET_ACTIVE){
           performHTTP("/player/next",POST);          
         }
         Serial.println("HO VISTOOOOOO next\n");
+        char c;
+        int timer=1;
+        String send = String("Madonna ipertroia#");
+        for(int i=0; i<send.length();i++){
+          c = send.charAt(i);
+          Serial2.write(c);
+          timer--;
+          if (timer ==0 ){
+            String tmp = Serial2.readStringUntil('%');
+            Serial.println(tmp);
+            timer = 1;
+          }
+        }
+        send = String("");
         value = String("");
       }
       else if (value.compareTo("upup") == 0){
