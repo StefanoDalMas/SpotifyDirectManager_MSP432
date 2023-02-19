@@ -54,7 +54,7 @@ In order to set up the UART communication we need to the following prelimary ste
     2. [WiFi]
     3. [HTTPClient]
 2. Modify the credentials for internet access in the `ESP32WiFi.ino` file
-3. Modify the bearer token as explained in the [next section](####Spotify-APIS)
+3. Modify the bearer token as explained in the [next section](#spotify-apis)
 
 #### Spotify APIS
 The next steps are to be followed in order to get the access token:
