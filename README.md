@@ -57,25 +57,24 @@ In order to set up the UART communication we need to the following prelimary ste
 3. Build the project and burn it to the MSP432
 4. Open the `ESP32WiFi.ino` file in the Arduino IDE
 5. Burn the code to the ESP32
-6. Download the [driverlib](https://www.ti.com/tool/MSPDRIVERLIB) and [grlib](https://www.ti.com/tool/MSP-GRLIB) libraries
 
 ### External libraries and APIS
 #### MSP432
 1. Download the [driverlib](https://www.ti.com/tool/MSPDRIVERLIB) and [grlib](https://www.ti.com/tool/MSP-GRLIB) libraries
-2. Add the libraries to the linker file
+2. Add the libraries to the linker and loader in the project properties
 
 #### ESP32
 1. Install the following libraries from the Arduino IDE library manager:
-    1. [Arduino_JSON]
-    2. [WiFi]
-    3. [HTTPClient]
+    1. ArduinoJson
+    2. WiFi
+    3. HTTPClient
 2. Modify the credentials for internet access in the `ESP32WiFi.ino` file
 3. Modify the bearer token as explained in the [next section](#spotify-apis)
 
 #### Spotify APIS
 The next steps are to be followed in order to get the access token:
 1. Create a Spotify developer account
-2. Create a new project
+2. Create a new project on the Spotify developer dashboard
 3. Add a [new application](https://developer.spotify.com/dashboard/login)
 4. Set a new redirect URI for the application
 5. Copy the following link on your browser 
@@ -128,9 +127,9 @@ The next steps are to be followed in order to get the access token:
 
 
 ## Contact
-1. Stefano Dal Mas [stefano.dalmas@studenti.unitn.it]
+1. [Stefano Dal Mas](https://github.com/StefanoDalMas) [stefano.dalmas@studenti.unitn.it]
 
-2. Andy Ion Ditu [andyion.ditu@studenti.unitn.it]
+2. [Andy Ion Ditu](https://github.com/Ion-Andy) [andyion.ditu@studenti.unitn.it]
 
-3. Amir Gheser [amir.gheser@studenti.unitn.it]
+3. [Amir Gheser](https://github.com/rogergheser) [amir.gheser@studenti.unitn.it]
 
