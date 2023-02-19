@@ -62,7 +62,10 @@ The next steps are to be followed in order to get the access token:
 2. Create a new project
 3. Add a [new application](https://developer.spotify.com/dashboard/login)
 4. Set a new redirect URI for the application
-5. Copy the following link on your browser (https://accounts.spotify.com/authorize?client_id={XXX}&response_type=code&scope={XXX}&redirect_uri={XXX})
+5. Copy the following link on your browser 
+```
+(https://accounts.spotify.com/authorize?client_id={XXX}&response_type=code&scope={XXX}&redirect_uri={XXX})
+```
 The {XXX} need to be changed to the appropriate values:
     1. client_id: the client id of the application
     2. scope: the actions you want to perform in your application. e.g.
