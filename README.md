@@ -7,11 +7,29 @@ Our controller is able to play, pause, skip, and go back to the previous song. I
 It exploits the Spotify API to get the song name, artist, and album cover. It then uses the UART protocol to send the data to the MSP432 which then displays the data on the LCD screen.
 The ESP connects to the wifi using the wifi library and the http client library. It then uses the UART protocol to communicate with the MSP432. With the tokens we call the spotify APIs using the HTTP client library. We then parse the JSON data. We then send the data to the MSP using the UART protocol.
 
+## Requirements
+### Hardware
+1. MSP432P401R Launchpad
+2. ESP8266
+
+### Software
+1. Spotify API
+2. Code Composer Studio
+3. Driverlib
+4. Grlib
+
 ## Installation
 1. Clone the repository
-2. Open the project in Code Composer Studio
+2. Open the project in Code Composer Studio, if you don't have it, you can download it [here](http://www.ti.com/tool/CCSTUDIO)
+3. Download the [driverlib](https://www.ti.com/tool/MSPDRIVERLIB) and [grlib](https://www.ti.com/tool/MSP-GRLIB) libraries
 3. Connect the MSP432 to the computer
-4. Build and run the project
+4. Connect the ESP8266 to the MSP432
+5. Build the project
+6. Before running, create a Spotify Developer account
+7. Get your own key from the Spotify Developer website
+8. Use curl to get the access token
+9. Copy the access token in the `token` variable in the `ESP32WiFi.ino.ino` file
+10. Run the project
 
 ## Usage
 1. Connect the MSP432 to the computer
@@ -28,17 +46,6 @@ The ESP connects to the wifi using the wifi library and the http client library.
 1. Display Song Name
 2. Display Artist
 3. Play/pause state by spinning logo
-
-## Requirements
-### Hardware
-1. MSP432P401R Launchpad
-2. ESP8266
-
-### Software
-1. Spotify API
-2. CCS
-3. Driverlib
-4. Grlib
 
 
 ## Credits
