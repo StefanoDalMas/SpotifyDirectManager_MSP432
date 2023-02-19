@@ -68,8 +68,11 @@ The next steps are to be followed in order to get the access token:
     ```
     The {XXX} need to be changed to the appropriate values:
     1. client_id: the client id of the application
-    2. scope: the actions you want to perform in your application. e.g.
-    user-read-playback-state user-modify-playback-state user-read-currently-playing
+    2. scope: the actions you want to perform in your application. 
+    e.g.
+        ```
+        user-read-playback-state user-modify-playback-state user-read-currently-playing
+        ```
     3. redirect_uri: the redirect uri of the application (it has to be URL encoded)
 6. Copy the token from the redict uri
 7. Use the token to call the 'curl' command in your terminal
@@ -81,7 +84,7 @@ The next steps are to be followed in order to get the access token:
     2. code: the token obtained from the redirect uri
     3. redirect_uri: the redirect uri of the application (it has to be URL encoded)
 8. Copy the access token from the response
-9. Append the access token to the `token` variable in the `ESP32WiFi.ino.ino` file so that it is "Bearer {appended_token}"
+9. Append the access token to the `token` variable in the `ESP32WiFi.ino` file so that it is "Bearer {appended_token}"
 
 ## Usage
 1. Connect the MSP432 to the computer
