@@ -17,24 +17,24 @@ The ESP connects to the wifi using the wifi library and the http client library.
 1. Connect the MSP432 to the computer
 2. Build and run the project
 
-# Options
+## Options
 1. Play/Pause
 2. Skip
 3. Previous
 4. Volume Up
 5. Volume Down
 
-# Info
+## Info
 1. Display Song Name
 2. Display Artist
 3. Play/pause state by spinning logo
 
-# Requirements
-## Hardware
+## Requirements
+### Hardware
 1. MSP432P401R Launchpad
 2. ESP8266
 
-## Software
+### Software
 1. Spotify API
 2. CCS
 3. Driverlib
