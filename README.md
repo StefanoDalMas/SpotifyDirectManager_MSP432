@@ -7,21 +7,35 @@ Our project is a Spotify Direct Manager. It allows the user to control the Spoti
 ## Table of contents
 1. [Description](#description)
 2. [Table of contents](#table-of-contents)
-3. [Requirements](#requirements)
+3. [Project Structure](#project-structure)
+4. [Requirements](#requirements)
     1. [Hardware](#hardware)
     2. [Software](#software)
     3. [External libraries and APIs](#external-libraries-and-apis)
-4. [Installation](#installation)
+5. [Installation](#installation)
     1. [Hardware](#hardware-1)
     2. [Software](#software-1)
     3. [External libraries and APIS](#external-libraries-and-apis-1)
         1. [MSP432](#msp432)
         2. [ESP32](#esp32)
         3. [Spotify APIS](#spotify-apis)
-5. [Usage](#usage)
-6. [Options](#options)
-7. [Info](#info)
-8. [Contact](#contact)
+6. [Usage](#usage)
+7. [Options](#options)
+8. [Info](#info)
+9. [Presentation and Demo](#presentation-and-demo)
+10. [Contact](#contact)
+
+## Project Structure
+```
+├───.vscode
+├───src
+│   ├───images
+│   ├───lib
+│   │   ├───driverlib
+│   │   └───grlib
+│   └───msp432
+└───src_esp32
+```
 
 ## Requirements
 ### Hardware
@@ -125,6 +139,30 @@ The next steps are to be followed in order to get the access token:
 3. Volume info by progress bar
 4. Play/pause state by spinning logo
 
+
+## Presentation and Demo
+
+## References
+1. [MSP432P401R Launchpad](https://www.ti.com/tool/MSP-EXP432P401R)
+2. [MSP432P401R BoosterPack](https://www.ti.com/tool/BOOSTXL-EDUMKII)
+3. [ESP32](https://www.espressif.com/en/products/socs/esp32)
+4. [Spotify APIs](https://developer.spotify.com/documentation/web-api/)
+5. [Arduino_JSON](https://arduinojson.org/)
+6. [WiFi](https://www.arduino.cc/en/Reference/WiFi)
+7. [HTTPClient](https://www.arduino.cc/en/Reference/HTTPClient)
+8. [Driverlib](https://www.ti.com/tool/MSPDRIVERLIB)
+9. [Grlib](https://www.ti.com/tool/MSP-GRLIB)
+10. [Code Composer Studio](http://www.ti.com/tool/CCSTUDIO)
+11. [Arduino IDE](https://www.arduino.cc/en/software)
+12. [MSP432P401R Launchpad User's Guide](https://www.ti.com/lit/ug/slau356i/slau356i.pdf)
+13. [MSP432P401R Launchpad Hardware User's Guide](https://www.ti.com/lit/ug/slau356j/slau356j.pdf)
+14. [MSP432P401R Launchpad Software User's Guide](https://www.ti.com/lit/ug/slau356k/slau356k.pdf)
+15. [MSP432P401R Launchpad BoosterPack User's Guide](https://www.ti.com/lit/ug/slau356l/slau356l.pdf)
+16. [MSP432P401R Launchpad BoosterPack Hardware User's Guide](https://www.ti.com/lit/ug/slau356m/slau356m.pdf)
+17. [MSP432P401R Launchpad BoosterPack Software User's Guide](https://www.ti.com/lit/ug/slau356n/slau356n.pdf)
+18. [Picture to C code converter](https://www.digole.com/tools/PicturetoC_Hex_converter.php)
+19. [Edge Impulse](https://studio.edgeimpulse.com/studio/176434)
+20. [Dataset](http://download.tensorflow.org/data/speech_commands_v0.02.tar.gz](http://download.tensorflow.org/data/speech_commands_v0.02.tar.gz))
 
 ## Contact
 1. [Stefano Dal Mas](https://github.com/StefanoDalMas) [stefano.dalmas@studenti.unitn.it]
