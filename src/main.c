@@ -11,7 +11,15 @@
 #include<stdio.h>
 #include <stdbool.h>
 
+#define SCREEN_MAXWIDTH 128
+#define MAX_VOLUME 100
+#define MIN_VOLUME 0
+#define TIMER_PERIOD 0x1400 // 9216 / 32700 = 0.33s
+#define MAX_TIME_PERIOD_SHOW_BAR 6
+
+
 //LCD
+#include <image.c> //DON'T OPEN THIS FILE IN CCS, IT WILL CRASH 
 Graphics_Context g_sContext;
 
 //UART
@@ -20,15 +28,39 @@ uint8_t RXData = 0;
 uint8_t data_received[10];
 int counter = 0;
 char str[4];
+//String sending
+#define MAX_SIZE_READ 64
+int count = 0;
+int ack = 1;
+uint8_t AuthorName[MAX_SIZE_READ] = "SpotifyDirectManager";
+uint8_t SongName[MAX_SIZE_READ] = "CAzzitestPalle";
 
 //ADC conversion
 static uint16_t joystickBuffer[2];
 static uint16_t accelerometer_z_axis;
+//Joystick reading
+bool tilted = false;
+//Button reading
+bool token = false;
 
-//Image
-static const uint8_t spotify_logo[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x02, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x04, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x02, 0x04, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x02, 0x01, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x01, 0x03, 0x03, 0x03, 0x02, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x01, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x03, 0x03, 0x03, 0x02, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x02, 0x03, 0x03, 0x03, 0x03, 0x00, 0x00, 0x00,0x00, 0x00, 0x04, 0x03, 0x03, 0x02, 0x04, 0x00, 0x00, 0x00, 0x01, 0x01, 0x02, 0x03, 0x03, 0x03, 0x05, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x03, 0x03, 0x04, 0x00, 0x00,0x00, 0x00, 0x03, 0x03, 0x02, 0x01, 0x00, 0x00, 0x01, 0x04, 0x02, 0x03, 0x03, 0x06, 0x07, 0x07, 0x03, 0x03, 0x03, 0x03, 0x02, 0x01, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x03, 0x03, 0x00, 0x00,0x00, 0x06, 0x03, 0x03, 0x06, 0x00, 0x01, 0x07, 0x02, 0x03, 0x06, 0x04, 0x04, 0x00, 0x00, 0x00, 0x04, 0x04, 0x07, 0x03, 0x03, 0x02, 0x07, 0x01, 0x00, 0x00, 0x01, 0x02, 0x03, 0x03, 0x06, 0x00,0x00, 0x03, 0x03, 0x03, 0x02, 0x06, 0x02, 0x03, 0x06, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x07, 0x03, 0x03, 0x02, 0x06, 0x01, 0x00, 0x06, 0x03, 0x03, 0x03, 0x00,0x00, 0x03, 0x03, 0x03, 0x03, 0x03, 0x06, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x07, 0x03, 0x03, 0x02, 0x01, 0x06, 0x03, 0x03, 0x03, 0x00,0x00, 0x03, 0x03, 0x03, 0x03, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x02, 0x02, 0x02, 0x02, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x03, 0x02, 0x05, 0x03, 0x03, 0x03, 0x00,0x00, 0x03, 0x03, 0x03, 0x06, 0x00, 0x00, 0x00, 0x06, 0x03, 0x03, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x03, 0x03, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x05, 0x03, 0x03, 0x03, 0x03, 0x00,0x00, 0x03, 0x03, 0x03, 0x03, 0x06, 0x01, 0x06, 0x03, 0x02, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x02, 0x02, 0x03, 0x03, 0x06, 0x00, 0x00, 0x00, 0x06, 0x03, 0x03, 0x03, 0x03, 0x00,0x00, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x02, 0x03, 0x06, 0x00, 0x01, 0x02, 0x03, 0x03, 0x03, 0x03, 0x00,0x00, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x02, 0x01, 0x00, 0x00, 0x01, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x00, 0x00, 0x00, 0x01, 0x06, 0x03, 0x06, 0x02, 0x03, 0x03, 0x03, 0x03, 0x06, 0x00,0x00, 0x00, 0x03, 0x03, 0x03, 0x03, 0x02, 0x01, 0x00, 0x01, 0x07, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x02, 0x07, 0x04, 0x00, 0x00, 0x00, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00, 0x00,0x00, 0x00, 0x04, 0x03, 0x03, 0x03, 0x06, 0x00, 0x01, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x02, 0x06, 0x04, 0x00, 0x04, 0x03, 0x03, 0x03, 0x03, 0x03, 0x04, 0x00, 0x00,0x00, 0x00, 0x00, 0x03, 0x03, 0x03, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x01, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x01, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x02, 0x01, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x04, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x02, 0x04, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x02, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-static const uint32_t spotify_logoPalette[] = {0x00000000, 0x000FFF00,0x000FFF00,0x000FFF00,0x000FFF00,0x000FFF00,0x000FFF00,0x000FFF00}; 
-static const Graphics_Image spotify_logoImage = { GRAPHICS_IMAGE_FMT_8BPP_UNCOMP, 32, 32, 8,spotify_logoPalette,spotify_logo };
+//Idk where to put this one lol its for the last part of UART
+bool authorChanged = false;
+bool songChanged = false;
+bool receivedAuthor = false;
+
+//All images in image.c careful don't open it
+Graphics_Image spotify_logos[12];
+int32_t rotation = 0;
+int32_t slide_value =SCREEN_MAXWIDTH;
+//syncronization
+volatile bool playing = false; //tell if the image has to be rotated or not
+volatile int32_t volume = 50;
+volatile bool volumeChanged = false;
+//draw image
+const int32_t VOLUME_BAR_POSITION_X = 14;
+int32_t show_bar_counter = MAX_TIME_PERIOD_SHOW_BAR;
+
+
 
 /* UART Configuration Parameter. These are the configuration parameters to
  * make the eUSCI A UART module to operate with a 115200 baud rate. These
@@ -36,6 +68,7 @@ static const Graphics_Image spotify_logoImage = { GRAPHICS_IMAGE_FMT_8BPP_UNCOMP
  * at:
  * http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/MSP430BaudRateConverter/index.html
  */
+//mmhhh... could use 2 uart
 const eUSCI_UART_ConfigV1 uartConfig =
 {
         EUSCI_A_UART_CLOCKSOURCE_SMCLK,          // SMCLK Clock Source
@@ -43,7 +76,7 @@ const eUSCI_UART_ConfigV1 uartConfig =
         0,                                       // UCxBRF = 0
         111,//37,                                      // UCxBRS = 37
         EUSCI_A_UART_NO_PARITY,                  // No Parity
-        EUSCI_A_UART_LSB_FIRST,                  // MSB First
+        EUSCI_A_UART_LSB_FIRST,                  // LSB First
         EUSCI_A_UART_ONE_STOP_BIT,               // One stop bit
         EUSCI_A_UART_MODE,                       // UART mode
         EUSCI_A_UART_OVERSAMPLING_BAUDRATE_GENERATION,  // Oversampling
@@ -73,19 +106,9 @@ void _graphicsInit()
 
 void setUpButtons(){
     //clean voltage in buttons
-    GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN1);
-    GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN4);
     GPIO_setOutputLowOnPin(GPIO_PORT_P5, GPIO_PIN1);
     GPIO_setOutputLowOnPin(GPIO_PORT_P3, GPIO_PIN5);
 
-    /* P1.1 as input for button */
-    GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN1);
-    GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN1);
-
-
-    /* P1.4 as input for button */
-    GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN4);
-    GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN4);
 
     //buttons boosterpack
     // J4.33 -> p5.1
@@ -98,16 +121,22 @@ void setUpButtons(){
     //registering to NVIC
     Interrupt_enableInterrupt(INT_PORT3);
     Interrupt_enableInterrupt(INT_PORT5);
-    Interrupt_enableInterrupt(INT_PORT1);
 
     //clear interrupt flags
-    GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN1);
-    GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN4);
     GPIO_clearInterruptFlag(GPIO_PORT_P5, GPIO_PIN1);
     GPIO_clearInterruptFlag(GPIO_PORT_P3, GPIO_PIN5);
 
     /* activate interrupt notification */
     Interrupt_enableMaster();
+}
+
+
+bool consumetoken(){
+    if (token){
+        token = false;
+        return true;
+    }
+    return false;
 }
 
 void _adcInit(){
@@ -156,12 +185,12 @@ void _adcInit(){
         ADC14_toggleConversionTrigger();
 }
 
+//UART 
 void sendString(char* str) {
     while(*str != '\0') {
         UART_transmitData(EUSCI_A2_BASE, *str);
         str++;
     }
-    while(UART_receiveData(EUSCI_A2_BASE) != 37){};
 }
 
 void setUpUART(){
@@ -169,7 +198,7 @@ void setUpUART(){
         GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P3,GPIO_PIN2 | GPIO_PIN3, GPIO_PRIMARY_MODULE_FUNCTION);
         GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN0);
         GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN0);
-        /* Setting DCO to 24MHz (upping Vcore) -> CPU operates at 24 MHz!*/
+        //MODIFIED FROM 24MHz to 48MHz DONT TOUCH IT
         FlashCtl_setWaitState(FLASH_BANK0, 2);
         FlashCtl_setWaitState(FLASH_BANK1, 2);
         PCM_setCoreVoltageLevel(PCM_VCORE1);
@@ -185,6 +214,27 @@ void setUpUART(){
         UART_enableInterrupt(EUSCI_A2_BASE, EUSCI_A_UART_RECEIVE_INTERRUPT);
         Interrupt_enableInterrupt(INT_EUSCIA2);
         Interrupt_enableSleepOnIsrExit();
+}
+
+
+//Timer
+const Timer_A_UpModeConfig upConfig =
+{
+        TIMER_A_CLOCKSOURCE_ACLK,              // ACLK = 32768 Hz
+        TIMER_A_CLOCKSOURCE_DIVIDER_1,         // ACLK/1
+        TIMER_PERIOD,                           // every second
+        TIMER_A_TAIE_INTERRUPT_DISABLE,         // Disable Timer interrupt
+        TIMER_A_CCIE_CCR0_INTERRUPT_ENABLE ,    // Enable CCR0 interrupt
+        TIMER_A_DO_CLEAR                        // Clear value
+}; //TIMER IN UPMODE
+
+
+void set_timer(){
+    CS_setReferenceOscillatorFrequency(CS_REFO_32KHZ); //either 32 or 128
+    CS_initClockSignal(CS_ACLK,CS_REFOCLK_SELECT, CS_CLOCK_DIVIDER_1);
+    Timer_A_configureUpMode(TIMER_A1_BASE, &upConfig);
+    Interrupt_enableInterrupt(INT_TA1_0);
+    Timer_A_startCounter(TIMER_A1_BASE, TIMER_A_UP_MODE);
 }
 
 void _hwinit(){
@@ -208,21 +258,79 @@ void _hwinit(){
 
     //Flush stdout -- remove this!!!!
     fflush(stdout);
-    fflush(stdout);
     setUpButtons();
     _adcInit();
     _graphicsInit();
     setUpUART();
+    set_timer();
 }
 
 
+//GRAPHICS
+
+
+void logosinit(){
+    spotify_logos[0] = spotify_image0;
+    spotify_logos[1] = spotify_image1;
+    spotify_logos[2] = spotify_image2;
+    spotify_logos[3] = spotify_image3;
+    spotify_logos[4] = spotify_image4;
+    spotify_logos[5] = spotify_image5;
+    spotify_logos[6] = spotify_image6;
+    spotify_logos[7] = spotify_image7;
+    spotify_logos[8] = spotify_image8;
+    spotify_logos[9] = spotify_image9;
+    spotify_logos[10] = spotify_image10;
+    spotify_logos[11] = spotify_image11;
+}
+
+
+bool first = true;
+
+void drawscreen(int32_t slide_value,int32_t rotation){
+    if (authorChanged || songChanged){
+        tRectangle delete_text = {0,40, 128, 100};
+        GrContextForegroundSet(&g_sContext, ClrBlack);
+        GrRectFill(&g_sContext, &delete_text);
+        GrFlush(&g_sContext);
+        GrContextForegroundSet(&g_sContext, ClrWhite);
+        if (authorChanged) {
+            authorChanged = false;
+        }
+        if (songChanged) {
+            songChanged = false;
+        }
+    }
+    //making text slide
+    Graphics_drawStringCentered(&g_sContext, (int8_t *) AuthorName, AUTO_STRING_LENGTH,slide_value, 60, OPAQUE_TEXT);
+    Graphics_drawStringCentered(&g_sContext, (int8_t *) SongName, AUTO_STRING_LENGTH,slide_value, 80, OPAQUE_TEXT);
+    Graphics_drawImage(&g_sContext,&spotify_logos[rotation],0,0);
+    //Volume bar
+    tRectangle rect_volume = {VOLUME_BAR_POSITION_X,102,VOLUME_BAR_POSITION_X + volume,114}; 
+    tRectangle delete_rect = {VOLUME_BAR_POSITION_X,102,128,114};
+    //Delete old one only if it is not the same
+    if (volumeChanged){
+        GrContextForegroundSet(&g_sContext, ClrBlack);
+        GrRectFill(&g_sContext, &delete_rect);
+        GrFlush(&g_sContext);
+        GrContextForegroundSet(&g_sContext, 0x00ff00);
+        GrRectFill(&g_sContext, &rect_volume);
+        GrContextForegroundSet(&g_sContext, ClrWhite);
+        show_bar_counter = MAX_TIME_PERIOD_SHOW_BAR;
+        volumeChanged = false;
+    }
+    if (show_bar_counter == 0){
+        GrContextForegroundSet(&g_sContext, ClrBlack);
+        GrRectFill(&g_sContext, &delete_rect);
+        GrContextForegroundSet(&g_sContext, ClrWhite);
+    }
+    GrFlush(&g_sContext);
+}
 
 
 int main(void){
     _hwinit();
-
-    Graphics_drawStringCentered(&g_sContext, (int8_t *) "Hello", AUTO_STRING_LENGTH,60, 60, OPAQUE_TEXT);
-    Graphics_drawImage(&g_sContext,&spotify_logoImage,0,0);
+    logosinit();
 
     while(1)
     {
@@ -232,50 +340,105 @@ int main(void){
 }
 
 
-/* EUSCI A0 UART ISR - Echos data back to PC host */
+
+void TA1_0_IRQHandler(void){
+        Timer_A_clearCaptureCompareInterrupt(TIMER_A1_BASE,TIMER_A_CAPTURECOMPARE_REGISTER_0);
+        //if button was pressed update the state
+        if (consumetoken()){
+            if (playing){
+                char str[5] = "stop";
+                sendString(str);
+                printf("stop\n");
+                playing = false;
+            }
+            else{
+                char str[5] = "play";
+                sendString(str);
+                printf("play\n");
+                playing = true;
+            }
+        }
+
+        drawscreen(slide_value,rotation);
+        
+        slide_value--;
+        if (slide_value == 0){
+            printf("Resizing\n");
+            GrContextForegroundSet(&g_sContext, ClrBlack);
+            tRectangle rect = {0,40,128,100}; //x0,y0,x1,y1
+            GrRectFill(&g_sContext, &rect);
+            GrFlush(&g_sContext);
+            GrContextForegroundSet(&g_sContext, ClrWhite);
+            slide_value = SCREEN_MAXWIDTH;
+        }
+        
+        //if the device is playing, rotate the logo
+        if (playing){
+            rotation = (rotation + 1) % 11;
+        }
+        if (show_bar_counter > 0){
+            show_bar_counter--;
+        }
+}
+
+
+
+
+
 void EUSCIA2_IRQHandler(void)
 {
-    uint32_t status = UART_getEnabledInterruptStatus(EUSCI_A2_BASE);
+    uint32_t status = UART_getEnabledInterruptStatus(EUSCI_A2_BASE);                               
 
     if(status & EUSCI_A_UART_RECEIVE_INTERRUPT_FLAG)
     {
         RXData = UART_receiveData(EUSCI_A2_BASE);
-        printf("%c\n", RXData);
-        UART_transmitData(EUSCI_A2_BASE,'%');
-
+        if (RXData != '#'){
+            if (!receivedAuthor){
+                AuthorName[count] = RXData;
+            }
+            else{
+                SongName[count] = RXData;
+            }
+            count++;
+            ack--;
+            if (ack ==0){
+                UART_transmitData(EUSCI_A2_BASE, '%');
+                ack = 1;
+            }
+        }
+        else{
+            if (!receivedAuthor){
+                AuthorName[count] = '\0';
+                receivedAuthor = true;
+                authorChanged = true;
+            }
+            else{
+                SongName[count] = '\0';
+                receivedAuthor = false;
+                songChanged = true;
+            }
+            count = 0;
+        }
+        if (authorChanged && songChanged){
+            first = false;
+        }
+        printf("received from uart %c\n", RXData);
+        fflush(stdout);    
         Interrupt_disableSleepOnIsrExit();
     }
-
+    
 }
 
 
-//Interrupts
-void PORT1_IRQHandler(){
 
-    uint_fast16_t status = GPIO_getEnabledInterruptStatus(GPIO_PORT_P1);
-    GPIO_clearInterruptFlag(GPIO_PORT_P1, status);
-    if (status & GPIO_PIN1){
-        printf("ho premuto 1.1\n");
-    }
-    if (status & GPIO_PIN4){
-        printf("ho premuto 1.4\n"); //check why tf this keeps launching an interrupt
-    }
-}
+//Button handlers
 
-bool playing = false;
 
 void PORT5_IRQHandler(){
     uint_fast16_t status = GPIO_getEnabledInterruptStatus(GPIO_PORT_P5);
     GPIO_clearInterruptFlag(GPIO_PORT_P5,status);
     if (status & GPIO_PIN1){
-        if (playing){
-            printf("stop\n");
-            playing = false;
-        }
-        else{
-            printf("play\n");
-            playing = true;
-        }
+        token = true;
     }
 }
 
@@ -284,7 +447,7 @@ void PORT3_IRQHandler(){
     uint_fast16_t status = GPIO_getEnabledInterruptStatus(GPIO_PORT_P3);
     GPIO_clearInterruptFlag(GPIO_PORT_P3,status);
     if (status & GPIO_PIN5 ){
-        printf("ormai è periodica sta foto\n"); //same as P1.4
+        printf("ormai è periodica sta foto\n");
     }
 }
 
@@ -294,7 +457,8 @@ void PORT3_IRQHandler(){
 bool isInIdleState(int x){
     return ((x>7000) && (x<9000));
 }
-bool tilted = false;
+
+
 
 //ADC for joystick and accelerometer
 void ADC14_IRQHandler(void){
@@ -312,32 +476,43 @@ void ADC14_IRQHandler(void){
         //I need 2 bools to check if the joystick is tilted in a certain direction
         if(joystickBuffer[0] > 13000 && !tilted){
             printf("next\n");
-            char str[4] = {'n', 'e', 'x', 't','\0'};
+            char str[5] = "next";
             sendString(str);
             tilted = true;
+            playing = true;
         }
         if(joystickBuffer[0] < 3500 && !tilted){
             printf("prev\n");
-            char str[4] = {'p', 'r', 'e', 'v','\0'};
+            char str[5] = "prev";
             sendString(str);
             tilted = true;
+            playing = true;
         }
         if(joystickBuffer[1] > 13000 && !tilted){
             printf("upup\n");
-            char str[4] = {'u', 'p', 'u', 'p','\0'};
+            char str[5] = "upup";
             sendString(str);
+            if (volume < MAX_VOLUME){
+                volume+=10;
+                volumeChanged = true;
+            }
             tilted = true;
         }
         if(joystickBuffer[1] < 500 && !tilted){
             printf("down \n");
-            char str[4] = {'d', 'o', 'w', 'n','\0'};
+            char str[5] = "down";
             sendString(str);
+            if (volume > MIN_VOLUME){
+                volume -= 10;
+                volumeChanged = true;
+            }
             tilted = true;
         }
         if(isInIdleState(joystickBuffer[0]) && isInIdleState(joystickBuffer[1])){
             tilted = false;
         }
     }
+    /*
     //acceleometer reading
     if (status & ADC_INT2){
         accelerometer_z_axis = ADC14_getResult(ADC_MEM2);
@@ -352,4 +527,5 @@ void ADC14_IRQHandler(void){
             _delay_cycles(5000000);
         }
     }
+    */
 }
