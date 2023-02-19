@@ -96,7 +96,7 @@ The next steps are to be followed in order to get the access token:
 
 
 ## Options
-<img title="Buttons" alt="Buttons" src="/src/images/lb-guide">
+<img title="Buttons" alt="Buttons" src="https://github.com/StefanoDalMas/SpotifyDirectManager_MSP432/blob/main/src/images/lb-guide.jpg?raw=true">
 1. Play/Pause
 2. Skip
 3. Previous
