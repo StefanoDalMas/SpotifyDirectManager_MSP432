@@ -69,7 +69,7 @@ The next steps are to be followed in order to get the access token:
     The {XXX} need to be changed to the appropriate values:
     1. client_id: the client id of the application
     2. scope: the actions you want to perform in your application. 
-    e.g.
+    For this project we need the following scopes:
         ```
         user-read-playback-state user-modify-playback-state user-read-currently-playing
         ```
@@ -87,11 +87,16 @@ The next steps are to be followed in order to get the access token:
 9. Append the access token to the `token` variable in the `ESP32WiFi.ino` file so that it is "Bearer {appended_token}"
 
 ## Usage
-1. Connect the MSP432 to the computer
-2. Connect the ESP32 to the MSP432
-3. Build and run the project
+1. Connect the MSP432 to the computer as described in the [installation section](#installation)
+2. Connect the ESP32 to the MSP432 as described in the [installation section](#installation)
+3. [Build](#hardware-1) and run the project
+
+1. If you haven't already install as described in the [installation section](#installation)
+2. Run the project
+
 
 ## Options
+<img title="Buttons" alt="Buttons" src="/src/images/lb-guide">
 1. Play/Pause
 2. Skip
 3. Previous
