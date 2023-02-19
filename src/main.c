@@ -33,7 +33,7 @@ char str[4];
 int count = 0;
 int ack = 1;
 uint8_t AuthorName[MAX_SIZE_READ] = "SpotifyDirectManager";
-uint8_t SongName[MAX_SIZE_READ] = "CAzzitestPalle";
+uint8_t SongName[MAX_SIZE_READ] = "Stefano Andy Amir";
 
 //ADC conversion
 static uint16_t joystickBuffer[2];
@@ -512,20 +512,30 @@ void ADC14_IRQHandler(void){
             tilted = false;
         }
     }
-    /*
     //acceleometer reading
     if (status & ADC_INT2){
         accelerometer_z_axis = ADC14_getResult(ADC_MEM2);
         bool up_condition = accelerometer_z_axis> 14000;
-        bool down_condition = accelerometer_z_axis < 9000;
+        bool down_condition = accelerometer_z_axis < 7000;
         if (up_condition){
             printf("upup\n");
+            char str[5] = "upup";
+            sendString(str);
+            if (volume < MAX_VOLUME){
+                volume+=10;
+                volumeChanged = true;
+            }
             _delay_cycles(5000000);
         }
         if (down_condition){
             printf("down\n");
+            char str[5] = "down";
+            sendString(str);
+            if (volume > MIN_VOLUME){
+                volume -= 10;
+                volumeChanged = true;
+            }
             _delay_cycles(5000000);
         }
     }
-    */
 }
