@@ -2,7 +2,7 @@
 Project for Embedded Software for the IoT
 
 ## Description
-Our project is a Spotify Direct Manager. It allows the user to control the Spotify player on his/her smartphone from a remote device. The remote device is a MSP432P401R Launchpad with a BoosterPack which communicates with the smartphone via Spotify APIs. To do so, we connected our platform to a phone hotspot (but you could also connect to any other network as long as it's 2.4 GHz). Communication between components of our platform occurs via UART whereas communication with the APIs follow the HTTP protocol. Amongst the various feature the user will be able to play/pause the song, skip to the next/previous song, change the volume, by using the buttons of the BoosterPack and see the current song name and artist.
+Our project is a Spotify Direct Manager. It allows the user to control the Spotify player on his/her smartphone from a remote device. The remote device is a MSP432P401R Launchpad with a BoosterPack which communicates with the smartphone via Spotify APIs. To do so, we connected our platform to a phone hotspot (but you could also connect to any other network as long as it's 2.4 GHz). Communication between components of our platform occurs via UART whereas communication with the Spotify APIs follows the HTTP protocol. Amongst the various feature the user will be able to play/pause the song, skip to the next/previous song, change the volume, by using the buttons of the BoosterPack and see the current song name and artist.
 
 ## Table of contents
 1. [Description](#description)
