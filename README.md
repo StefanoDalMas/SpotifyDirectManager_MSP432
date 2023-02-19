@@ -2,10 +2,26 @@
 Project for Embedded Software for the IoT
 
 ## Description
-This project is a simple implementation of a Spotify Controller. Our project is based on the MSP432P401R Launchpad.
-Our controller is able to play, pause, skip, and go back to the previous song. It is also able to change the volume of the song. The controller is able to do this by using the buttons on the Launchpad. The controller is also able to display the song name, artist, and album cover on the LCD screen. The controller is able to do this by using the Spotify APIs.
-It exploits the Spotify APIs to get the song name, artist, and album cover. It then uses the UART protocol to send the data to the MSP432 which then displays the data on the LCD screen.
-The ESP connects to the wifi using the wifi library and the http client library. It then uses the UART protocol to communicate with the MSP432. With the tokens we call the spotify APIs using the HTTP client library. We then parse the JSON data. We then send the data to the MSP using the UART protocol.
+Our project is a Spotify Direct Manager. It allows the user to control the Spotify player on his/her smartphone from a remote device. The remote device is a MSP432P401R Launchpad with a BoosterPack which communicates with the smartphone via Spotify APIs. To do so, we connected our platform to a phone hotspot (but you could also connect to any other network). Communication between components of our platform occur via UART whereas communication with the APIs follow the HTTP protocol. Amongst the various feature the user will be able to play/pause the song, skip to the next/previous song, change the volume, by using the buttons of the BoosterPack and see the current song name and artist.
+
+## Table of contents
+1. [Description](#description)
+2. [Table of contents](#table-of-contents)
+3. [Requirements](#requirements)
+    1. [Hardware](#hardware)
+    2. [Software](#software)
+    3. [External libraries and APIs](#external-libraries-and-apis)
+4. [Installation](#installation)
+    1. [Hardware](#hardware-1)
+    2. [Software](#software-1)
+    3. [External libraries and APIS](#external-libraries-and-apis-1)
+        1. [MSP432](#msp432)
+        2. [ESP32](#esp32)
+        3. [Spotify APIS](#spotify-apis)
+5. [Usage](#usage)
+6. [Options](#options)
+7. [Info](#info)
+8. [Contact](#contact)
 
 ## Requirements
 ### Hardware
@@ -107,18 +123,14 @@ The next steps are to be followed in order to get the access token:
 ## Info
 1. Display Song Name
 2. Display Artist
-3. Play/pause state by spinning logo
+3. Volume info by progress bar
+4. Play/pause state by spinning logo
 
-
-## Credits
-1. [Spotify APIs](https://developer.spotify.com/web-api/)
-2. [MSP432P401R Launchpad](http://www.ti.com/tool/MSP-EXP432P401R)
-3. [ESP32](https://www.espressif.com/en/products/hardware/ESP32ex/overview)
 
 ## Contact
-1. [Stefano Dal Mas](stefano.dalmas@studenti.unitn.it)
+1. Stefano Dal Mas [stefano.dalmas@studenti.unitn.it]
 
-2. [Andy Ion Ditu](andyion.ditu@studenti.unitn.it)
+2. Andy Ion Ditu [andyion.ditu@studenti.unitn.it]
 
-3. [Amir Gheser](amir.gheser@studenti.unitn.it)
+3. Amir Gheser [amir.gheser@studenti.unitn.it]
 
