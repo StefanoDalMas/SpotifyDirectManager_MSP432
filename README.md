@@ -73,13 +73,13 @@ The next steps are to be followed in order to get the access token:
         3. redirect_uri: the redirect uri of the application (it has to be URL encoded)
 6. Copy the token from the redict uri
 7. Use the token to call the 'curl' command in your terminal
-```
-curl -H "Authorization: Basic {XXX}=" -d grant_type=authorization_code -d code={XXX} -d redirect_uri={XXX} https://accounts.spotify.com/api/token
-```
-The {XXX} need to be changed to the appropriate values:
-    1. authorisation: client_id:client_secret (it has to be URL encoded)
-    2. code: the token obtained from the redirect uri
-    3. redirect_uri: the redirect uri of the application (it has to be URL encoded)
+    ```
+    curl -H "Authorization: Basic {XXX}=" -d grant_type=authorization_code -d code={XXX} -d redirect_uri={XXX} https://accounts.spotify.com/api/token
+    ```
+    The {XXX} need to be changed to the appropriate values:
+        1. authorisation: client_id:client_secret (it has to be URL encoded)
+        2. code: the token obtained from the redirect uri
+        3. redirect_uri: the redirect uri of the application (it has to be URL encoded)
 8. Copy the access token from the response
 9. Append the access token to the `token` variable in the `ESP32WiFi.ino.ino` file so that it is "Bearer {appended_token}"
 
