@@ -7,11 +7,16 @@ from sklearn.model_selection import train_test_split
 from sklearn import metrics
 from scipy.fftpack import fft, ifft
 from scipy.io import wavfile as wav
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import accuracy_score
 import time
 import torchaudio
 import shutil
 import subprocess
 from pydub import AudioSegment
+import time
 ################
 # Extra info on SVMs:
 # https://scikit-learn.org/stable/modules/svm.html#
@@ -25,10 +30,8 @@ from pydub import AudioSegment
 ################
 ################
 # Make sure commands and classes are the same and in the same order
-commands = ['up', 'down', 'left', 'right', 'on', 'off', 'stop', 'one',
-            'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'zero']
-classes = {'up': 0, 'down': 1, 'left': 2, 'right': 3, 'on': 4, 'off': 5, 'stop': 6, 'one': 7,
-            'two': 8, 'three': 9, 'four': 10, 'five': 11, 'six': 12, 'seven': 13, 'eight': 14, 'nine': 15, 'zero': 16}
+commands = ['up', 'down', 'left', 'right', 'on', 'off', 'stop']
+classes = {'up': 0, 'down': 1, 'left': 2, 'right': 3, 'on': 4, 'off': 5, 'stop': 6}
 ################
 options = ['test', 'train', 'valid']
 
@@ -143,12 +146,13 @@ def loadDataset():
 
 class Main:
     def __init__(self, X, y, clf: svm.SVC, num_labels, num_data):
+        print("Initializing parameters...")
         self.clf = clf
         self.num_labels = num_labels
         self.num_data = num_data
         self.X = X
         self.y = y
-        clf.C = 1.0 # regularization parameter
+        clf.C = 3.0 # regularization parameter
         clf.kernel = 'rbf' # kernel type, rbf working fine here
         clf.cache_size = 200 # in MB - Note that it is advisable to set this value to 
                             # 500MB or 1000MB to avoid performance issues
@@ -159,14 +163,19 @@ class Main:
         # by using the option multi_class='crammer_singer'. In practice, 
         # one-vs-rest classification is usually preferred, since the results
         #  are mostly similar, but the runtime is significantly less.
+        print("Calling fit function...")
         clf.fit(X, y)
 
-    def test_model(X_test, y_test):
+    def test_model(self, X_test, y_test):
         # Test the model
+        print("Testing model...")
         y_pred = clf.predict(X_test)
-        print(y_pred)
         # Model Accuracy: how often is the classifier correct?
-        print("Accuracy:",metrics.accuracy_score(y_test, y_pred))
+        cm = confusion_matrix(y_test, y_pred, labels=clf.classes_)
+        disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=clf.classes_)
+        disp.plot()
+        plt.show()
+        print("Accuracy:", metrics.accuracy_score(y_test, y_pred))
 
     #funzione fatta da copilot spero funzioni
     def plot_confusion_matrix():
@@ -214,14 +223,25 @@ if __name__ == "__main__":
     # Normalise data
     # We calculate the mean for each variable and the standard deviation
 
-    X_train = np.asmatrix(list(map(lambda x: x[0], train[:]["fft"])))
+    X_train = np.asarray(list(map(lambda x: x[0], train[:]["fft"])))
     y_train = np.asarray(list(map(lambda x: x[0], train[:]["command"])))
-    X_test = np.asmatrix(list(map(lambda x: x[0], test[:]["fft"])))
+    X_test = np.asarray(list(map(lambda x: x[0], test[:]["fft"])))
     y_test = np.asarray(list(map(lambda x: x[0], test[:]["command"])))
+
+    # ## PCA
+    # sc = StandardScaler()
+    # X_train = sc.fit_transform(X_train)
+    # X_test = sc.transform(X_test)
+
+    # pca = PCA()
+    # X_train = pca.fit_transform(X_train)
+    # X_test = pca.transform(X_test)
+    ##########################
+    print("Printing shapes:")
     print(X_train.shape)
     print(y_train.shape)
     print(X_test.shape) 
-    print(y_test.shape) 
+    print(y_test.shape)
     num_features = X_train.shape[1]
     num_data = X_train.shape[0]
     print(f"{num_features} features and {num_data} data points")
@@ -250,6 +270,14 @@ if __name__ == "__main__":
     # print(X_test)
     #===========================================================================
     # Init the SVM model and train it
+    start = time.time()
     main = Main(X_train, y_train, clf, num_labels=num_features, num_data=num_data)
+    end = time.time()
+    trainingTime = end - start
     # Test the model
+    start = time.time()
     main.test_model(X_test, y_test)
+    end = time.time()
+    testTime = end - start
+    
+    print(f"\033[0;32 Training time: {trainingTime}\tTest time: {testTime}")
