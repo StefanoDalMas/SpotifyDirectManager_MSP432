@@ -30,6 +30,8 @@ Our project is a Spotify Direct Manager. It allows the user to control the Spoti
 ├───.vscode
 ├───src
 │   ├───extra
+│       |───automator.py #converts the images to a C array
+│       |───svm.py # SVM classifier
 │   ├───images
 │   ├───msp432
 │   │   ├───grlib
