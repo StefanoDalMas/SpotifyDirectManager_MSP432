@@ -2,7 +2,7 @@
 Project for Embedded Software for the IoT
 
 ## Description
-Our project is a Spotify Direct Manager. It allows the user to control the Spotify player on his/her smartphone from a remote device. The remote device is a MSP432P401R Launchpad with a BoosterPack which communicates with the smartphone via Spotify APIs. To do so, we connected our platform to a phone hotspot (but you could also connect to any other network as long as it's 2.4 GHz). Communication between components of our platform occurs via UART whereas communication with the Spotify APIs follows the HTTP protocol. Amongst the various features the user will be able to play/pause the song, skip to the next/previous song, change the volume, by using the buttons of the BoosterPack and see the current song name and artist.
+Our project is a Spotify Direct Manager. It allows the user to control the Spotify player on his/her smartphone from a remote device. The remote device is a MSP432P401R Launchpad with a BoosterPack which communicates with the smartphone via Spotify APIs. To do so, we connected our platform to a phone hotspot (but you could also connect to any other network as long as it's 2.4 GHz). Communication between components of our platform occurs via UART whereas communication with the Spotify APIs follows the HTTP protocol. Amongst the various features the user will be able to play/pause the song, skip to the next/previous song, change the volume, by using the buttons of the BoosterPack and see the current song name and artist. In addition, we implemented a feature that allows the user to change the volume by rapidly moving the platform up or down which is done thanks to the accelerometer along the Z axis.
 
 ## Table of contents
 1. [Description](#description)
@@ -29,13 +29,15 @@ Our project is a Spotify Direct Manager. It allows the user to control the Spoti
 ```
 ├───.vscode
 ├───src
+│   ├───extra
 │   ├───images
-│   ├───lib
-│   │   ├───driverlib
-│   │   └───grlib
-│   └───msp432
-└───src_esp32
+│   ├───msp432
+│   │   ├───grlib
+│   │   └───driverlib
+│   └───esp32
+└───.gitignore
 ```
+
 
 ## Requirements
 ### Hardware
