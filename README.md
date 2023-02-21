@@ -2,7 +2,7 @@
 Project for Embedded Software for the IoT
 
 ## Description
-Our project is a Spotify Direct Manager. It allows the user to control the Spotify player on his/her smartphone from a remote device. The remote device is a MSP432P401R Launchpad with a BoosterPack which communicates with the smartphone via Spotify APIs. To do so, we connected our platform to a phone hotspot (but you could also connect to any other network as long as it's 2.4 GHz). Communication between components of our platform occurs via UART whereas communication with the Spotify APIs follows the HTTP protocol. Amongst the various features the user will be able to play/pause the song, skip to the next/previous song, change the volume, by using the buttons of the BoosterPack and see the current song name and artist. In addition, we implemented a feature that allows the user to change the volume by rapidly moving the platform up or down which is done thanks to the accelerometer along the Z axis.
+Our project is a Spotify track controller. It allows the user to control the Spotify player on his/her smartphone from a remote device. The remote device is a MSP432P401R Launchpad with a BoosterPack which communicates with the smartphone via Spotify APIs. To do so, we connected our controller to a 2.4 GHz network. Communication between components of our device occurs via UART whereas communication with the Spotify APIs follows the HTTP protocol. Amongst the various features the user will be able to play/pause the song, skip to the next/previous song, change the volume, by using the buttons of the BoosterPack and see the current song name and artist. In addition, we implemented a feature that allows the user to change the volume by rapidly moving the controller up or down which is done thanks to the accelerometer along the Z axis. 
 
 ## Table of contents
 1. [Description](#description)
@@ -39,7 +39,6 @@ Our project is a Spotify Direct Manager. It allows the user to control the Spoti
 │   └───esp32
 └───.gitignore
 ```
-
 
 ## Requirements
 ### Hardware
@@ -90,6 +89,7 @@ In order to set up the UART communication we need to the following prelimary ste
 3. Modify the bearer token as explained in the [next section](#spotify-apis)
 
 #### Spotify APIS
+##### Connecting to the Spotify API
 The next steps are to be followed in order to get the access token:
 1. Create a Spotify developer account
 2. Create a new project on the Spotify developer dashboard
@@ -118,6 +118,22 @@ The next steps are to be followed in order to get the access token:
     3. redirect_uri: the redirect uri of the application (it has to be URL encoded)
 8. Copy the access token from the response
 9. Append the access token to the `token` variable in the `ESP32WiFi.ino` file so that it is "Bearer {appended_token}"
+
+##### Using the APIs
+The following table will show the APIs used in this project and the corresponding HTTP requests:
+| API | HTTP Request | Description |
+| --- | --- | --- |
+| https://api.spotify.com/v1/me/player/currently-playing | GET | Get the current song |
+| https://api.spotify.com/v1/me/player/play | PUT | Play the current song |
+| https://api.spotify.com/v1/me/player/play | PUT | Pause the current song |
+| https://api.spotify.com/v1/me/player/pause | PUT | Pause the current song |
+| https://api.spotify.com/v1/me/player/next | POST | Skip the current song |
+| https://api.spotify.com/v1/me/player/previous | POST | Play the previous song |
+| https://api.spotify.com/v1/me/player/volume?volume_percent=<span style="colore: blue;">INT</span> | PUT | Change the volume |
+
+
+
+
 
 ## Usage
 1. Connect the MSP432 to the computer as described in the [installation section](#installation)
