@@ -129,7 +129,9 @@ The following table will show the APIs used in this project and the correspondin
 | https://api.spotify.com/v1/me/player/pause | PUT | Pause the current song |
 | https://api.spotify.com/v1/me/player/next | POST | Skip the current song |
 | https://api.spotify.com/v1/me/player/previous | POST | Play the previous song |
-| https://api.spotify.com/v1/me/player/volume?volume_percent=50 | PUT | Change the volume e.g. 50|
+| https://api.spotify.com/v1/me/player/volume?volume_percent=50 | PUT | Change the volume 
+e.g. 50|
+| --- | --- | --- |
 Volume can be changed from 0 to 100
 
 
