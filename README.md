@@ -148,11 +148,12 @@ Volume can be changed from 0 to 100
 ## Options
 <img title="Buttons" alt="Buttons" src="https://github.com/StefanoDalMas/SpotifyDirectManager_MSP432/blob/main/src/images/lb-guide.jpg?raw=true">
 
-1. Play/Pause <img title="Play" alt="play" src="">
-2. Skip
-3. Previous
-4. Volume Up
-5. Volume Down
+1. Play <img title="Play" alt="play" src="https://github.com/StefanoDalMas/SpotifyDirectManager_MSP432/blob/main/src/images/spotify-controls/play.png">
+2. Pause <img title="Pause" alt="pause" src="https://github.com/StefanoDalMas/SpotifyDirectManager_MSP432/blob/main/src/images/spotify-controls/pause.png">
+3. Next <img title="Next" alt="next" src="https://github.com/StefanoDalMas/SpotifyDirectManager_MSP432/blob/main/src/images/spotify-controls/next.png">
+3. Previous <img title="Prev" alt="prev" src="https://github.com/StefanoDalMas/SpotifyDirectManager_MSP432/blob/main/src/images/spotify-controls/prev.png">
+4. Volume Up <img title="Volume Up" alt="volume up" src="https://github.com/StefanoDalMas/SpotifyDirectManager_MSP432/blob/main/src/images/spotify-controls/volume-up.png">
+5. Volume Down <img title="Volume Down" alt="volume down" src="https://github.com/StefanoDalMas/SpotifyDirectManager_MSP432/blob/main/src/images/spotify-controls/volume-down.png">
 
 ## Info
 1. Display Song Name
