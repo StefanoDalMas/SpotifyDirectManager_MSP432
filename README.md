@@ -7,9 +7,9 @@ Our project is a Spotify track controller. It allows the user to control the Spo
 
 [Video Demo](https://youtu.be/F27nQAyCleA)
 
-[Presentation PDF](https://github.com/StefanoDalMas/SpotifyDirectManager_MSP432/blob/main/presentation/SpotifyManager.pdf)
-[Presentation PPT](https://github.com/StefanoDalMas/SpotifyDirectManager_MSP432/blob/main/presentation/SpotifyManager.pptx)
-[Presentation Keynote](https://github.com/StefanoDalMas/SpotifyDirectManager_MSP432/blob/main/presentation/SpotifyManager.key)
+* [Presentation PDF](https://github.com/StefanoDalMas/SpotifyDirectManager_MSP432/blob/main/presentation/SpotifyManager.pdf)
+* [Presentation PPT](https://github.com/StefanoDalMas/SpotifyDirectManager_MSP432/blob/main/presentation/SpotifyManager.pptx)
+* [Presentation Keynote](https://github.com/StefanoDalMas/SpotifyDirectManager_MSP432/blob/main/presentation/SpotifyManager.key)
 
 
 ## Table of contents
