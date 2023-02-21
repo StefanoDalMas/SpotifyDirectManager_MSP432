@@ -32,7 +32,7 @@ Our project is a Spotify track controller. It allows the user to control the Spo
 ├───.vscode
 ├───src
 │   ├───extra
-│       |───automator.py #converts the images to a C array
+│       |───automator.py #open through CLI connection with edgeImpulse
 │       |───svm.py # SVM classifier
 │   ├───images
 │   ├───msp432
