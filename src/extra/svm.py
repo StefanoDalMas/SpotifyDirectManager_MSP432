@@ -228,14 +228,14 @@ if __name__ == "__main__":
     X_test = np.asarray(list(map(lambda x: x[0], test[:]["fft"])))
     y_test = np.asarray(list(map(lambda x: x[0], test[:]["command"])))
 
-    # ## PCA
-    # sc = StandardScaler()
-    # X_train = sc.fit_transform(X_train)
-    # X_test = sc.transform(X_test)
+    ## PCA
+    sc = StandardScaler()
+    X_train = sc.fit_transform(X_train)
+    X_test = sc.transform(X_test)
 
-    # pca = PCA()
-    # X_train = pca.fit_transform(X_train)
-    # X_test = pca.transform(X_test)
+    pca = PCA()
+    X_train = pca.fit_transform(X_train)
+    X_test = pca.transform(X_test)
     ##########################
     print("Printing shapes:")
     print(X_train.shape)

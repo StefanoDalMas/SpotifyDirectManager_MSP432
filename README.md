@@ -2,7 +2,9 @@
 Project for Embedded Software for the IoT
 
 ## Description
-Our project is a Spotify track controller. It allows the user to control the Spotify player on his/her smartphone from a remote device. The remote device is a MSP432P401R Launchpad with a BoosterPack which communicates with the smartphone via Spotify APIs. To do so, we connected our controller to a 2.4 GHz network. Communication between components of our device occurs via UART whereas communication with the Spotify APIs follows the HTTP protocol. Amongst the various features the user will be able to play/pause the song, skip to the next/previous song, change the volume, by using the buttons of the BoosterPack and see the current song name and artist. In addition, we implemented a feature that allows the user to change the volume by rapidly moving the controller up or down which is done thanks to the accelerometer along the Z axis. 
+Our project is a Spotify track controller. It allows the user to control the Spotify player on his/her smartphone from a remote device. The remote device is a MSP432P401R Launchpad with a BoosterPack which communicates with the smartphone via Spotify APIs. To do so, we connected our controller to a 2.4 GHz network. Communication between components of our device occurs via UART whereas communication with the Spotify APIs follows the HTTP protocol. Amongst the various features the user will be able to play/pause the song, skip to the next/previous song, change the volume, by using the buttons of the BoosterPack and see the current song name and artist. In addition, we implemented a feature that allows the user to change the volume by rapidly moving the controller up or down which is done thanks to the accelerometer along the Z axis.
+[Video Demo](https://youtu.be/F27nQAyCleA)
+
 
 ## Table of contents
 1. [Description](#description)
@@ -167,13 +169,15 @@ Volume can be changed from 0 to 100
 * UART communication
 * MSP interrupts
 * HTTP requests
+* Creating dataset for Edge Impulse
 2. Ion Andy Ditu
 * Spotify APIs
 * JSON parsing
 * HTTP requests
 3. Amir Gheser
 * Dataset refinement
-* ML Model development
+* SVM Development
+* Edge Impulse Development
 
 ## Presentation and Demo
 
@@ -198,6 +202,7 @@ Volume can be changed from 0 to 100
 18. [Picture to C code converter](https://www.digole.com/tools/PicturetoC_Hex_converter.php)
 19. [Edge Impulse](https://studio.edgeimpulse.com/studio/176434)
 20. [Dataset](http://download.tensorflow.org/data/speech_commands_v0.02.tar.gz](http://download.tensorflow.org/data/speech_commands_v0.02.tar.gz))
+21. [Video](https://youtu.be/F27nQAyCleA)
 
 ## Contact
 1. [Stefano Dal Mas](https://github.com/StefanoDalMas) [stefano.dalmas@studenti.unitn.it]
