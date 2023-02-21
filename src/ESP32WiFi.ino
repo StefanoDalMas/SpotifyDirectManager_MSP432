@@ -9,6 +9,7 @@
 
 const char* ssid = "iPhone di Stefano"; //insert here
 const char* password = "oo8uki1diy6jy"; //insert here
+// togliere il token
 const char* token = "Bearer BQCEB7Lnv0Wu4JwS_l9OctnytXY1TQ_bWY7EaY62jMy55gD3xkYrMr7q1pe7UeFNIDxH55RJZgz7FU9ji18z6oiAIri0Qc0kQin_AjKwzceTf0cXnHnEHl4-IIsuCG-Gw1Tt5ZRzQLwVl-u4HBFZteEyZOzgGa2xG5xtG5QPDWSRco8-HxjjcgSVKOLrWxhjsqT7Bw"; //remember to create and add token
 const char* spotify_base_url = "https://api.spotify.com/v1/me";
 const int baud_rate = 115200;
@@ -20,10 +21,9 @@ char chr;
 char jsonOutput[128];
 String value;
 
-//Uart sending strings don't touch or it will explode
 int timer =1;
 char c;
-String send; //REMEMBER TO ADD SENTINEL VALUE # aka 35 ascii
+String send;
 String songName;
 String artistName;
 
@@ -49,8 +49,7 @@ void setup() {
     performHTTP("/player/volume?volume_percent=50",PUT);
     performHTTP("/player/pause",PUT);
   }
-  Serial.println("Setup completed :P");
-  //Serial.println("Press g to perform GET, p to perform \"pause\" and n to perform \"next\" \n"); andy frocio
+  Serial.println("Setup completed");
 }
 
 void loop() {
@@ -61,7 +60,6 @@ void loop() {
         if (INTERNET_ACTIVE){
           performHTTP("/player/previous",POST); 
         }
-        Serial.println("HO VISTOOOOOO prev\n");
         performHTTP("/player/currently-playing", GET);
         artistName.concat('#');
         Serial.println(artistName);
@@ -78,7 +76,6 @@ void loop() {
         if (INTERNET_ACTIVE){
           performHTTP("/player/next",POST);          
         }
-        Serial.println("HO VISTOOOOOO next\n");
         //Authorname
         performHTTP("/player/currently-playing", GET);
         artistName.concat('#');
@@ -100,7 +97,6 @@ void loop() {
             performHTTP(set,PUT);
           }          
         }
-        Serial.println("HO VISTOOOOOO upup\n");
         value = String("");
       }
       else if (value.compareTo("down") == 0){
@@ -112,21 +108,18 @@ void loop() {
             performHTTP(set,PUT);
           }
         }
-        Serial.println("HO VISTOOOOOO down\n");
         value = String("");
       }
       else if (value.compareTo("play") == 0){
         if (INTERNET_ACTIVE){
           performHTTP("/player/play",PUT);
         }
-        Serial.println("HO VISTOOOOOO play\n");
         value = String("");
       }
       else if (value.compareTo("stop") == 0){
         if (INTERNET_ACTIVE){
         performHTTP("/player/pause",PUT);
         }
-        Serial.println("HO VISTOOOOOO stop\n");
         value = String("");
       }  
     }
@@ -186,7 +179,7 @@ void performHTTP(String url, mode m){
     http.end();
   }
   else{
-    Serial.println("Not connected to WiFi :(");
+    Serial.println("Not connected to WiFi");
   }
 }
 void parse_print_request(String val){

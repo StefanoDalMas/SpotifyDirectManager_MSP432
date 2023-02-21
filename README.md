@@ -161,6 +161,19 @@ Volume can be changed from 0 to 100
 3. Volume info by progress bar
 4. Play/pause state by spinning logo
 
+## Contributors
+1. Stefano Dal Mas
+* WiFi communication
+* UART communication
+* MSP interrupts
+* HTTP requests
+2. Ion Andy Ditu
+* Spotify APIs
+* JSON parsing
+* HTTP requests
+3. Amir Gheser
+* Dataset refinement
+* ML Model development
 
 ## Presentation and Demo
 
