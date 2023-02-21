@@ -148,7 +148,7 @@ Volume can be changed from 0 to 100
 ## Options
 <img title="Buttons" alt="Buttons" src="https://github.com/StefanoDalMas/SpotifyDirectManager_MSP432/blob/main/src/images/lb-guide.jpg?raw=true">
 
-1. Play/Pause
+1. Play/Pause <img title="Play" alt="play" src="">
 2. Skip
 3. Previous
 4. Volume Up
