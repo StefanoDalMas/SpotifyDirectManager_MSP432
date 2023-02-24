@@ -86,7 +86,17 @@ In order to set up the UART communication we need to the following prelimary ste
 ### External libraries and APIS
 #### MSP432
 1. Download the [driverlib](https://www.ti.com/tool/MSPDRIVERLIB) and [grlib](https://www.ti.com/tool/MSP-GRLIB) libraries
-2. Add the libraries to the linker and loader in the project properties
+2. Add the libraries to the linker and loader in the project properties as shown below:
+    1. Open CCS and go to Projects > Properties
+    2. Go to Build > Arm Compiler > Include Options as shown in the image
+
+        <img src="https://github.com/StefanoDalMas/SpotifyDirectManager_MSP432/blob/main/src/images/include%20options.png">
+        
+    3. Go to Build > Arm Linker > File Search Path as shown in the image
+
+        <img src="https://github.com/StefanoDalMas/SpotifyDirectManager_MSP432/blob/main/src/images/file%20search%20path.png">
+        
+
 
 #### ESP32
 1. Install the following libraries from the Arduino IDE library manager:
@@ -154,7 +164,7 @@ Volume can be changed from 0 to 100
 
 
 ## Options
-<img title="Buttons" alt="Buttons" height="24" width="24" src="https://github.com/StefanoDalMas/SpotifyDirectManager_MSP432/blob/main/src/images/lb-guide.jpg?raw=true">
+<img title="Buttons" alt="Buttons" src="https://github.com/StefanoDalMas/SpotifyDirectManager_MSP432/blob/main/src/images/lb-guide.jpg?raw=true">
 
 1. Play <img title="Play" alt="play" height="24" width="24" src="https://github.com/StefanoDalMas/SpotifyDirectManager_MSP432/blob/main/src/images/spotify-controls/play.png">
 2. Pause <img title="Pause" alt="pause" height="24" width="24" src="https://github.com/StefanoDalMas/SpotifyDirectManager_MSP432/blob/main/src/images/spotify-controls/pause.png">

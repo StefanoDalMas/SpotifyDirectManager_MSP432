@@ -1,90 +1,82 @@
-/* DriverLib Includes */
+//MSP related includes
 #include <ti/devices/msp432p4xx/driverlib/driverlib.h>
-// Screen includes
 #include <ti/grlib/grlib.h>
 #include "LcdDriver/Crystalfontz128x128_ST7735.h"
 #include "LcdDriver/HAL_MSP_EXP432P401R_Crystalfontz128x128_ST7735.h"
 
 
-/* Standard Includes */
 #include <stdint.h>
-#include<stdio.h>
+#include <stdio.h>
 #include <stdbool.h>
+#include <image.c> //DON'T OPEN THIS FILE IN CCS, IT WILL CRASH 
 
 #define SCREEN_MAXWIDTH 128
 #define MAX_VOLUME 100
 #define MIN_VOLUME 0
-#define TIMER_PERIOD 0x1400 // 9216 / 32700 = 0.33s
+#define TIMER_PERIOD 0x1400 // 5120 / 32700 = 0.157s
 #define MAX_TIME_PERIOD_SHOW_BAR 6
+#define MAX_SIZE_READ 64
 
 
-//LCD
-#include <image.c> //DON'T OPEN THIS FILE IN CCS, IT WILL CRASH 
+
+//Const & Static section
+const int32_t VOLUME_BAR_POSITION_X = 14;
+static uint16_t joystickBuffer[2];
+static uint16_t accelerometer_z_axis;
+
+//Global variables
 Graphics_Context g_sContext;
-
-//UART
 uint8_t TXData = 1;
 uint8_t RXData = 0;
 uint8_t data_received[10];
 int counter = 0;
 char str[4];
-//String sending
-#define MAX_SIZE_READ 64
 int count = 0;
 int ack = 1;
 uint8_t AuthorName[MAX_SIZE_READ] = "SpotifyDirectManager";
 uint8_t SongName[MAX_SIZE_READ] = "Stefano Andy Amir";
-
-//ADC conversion
-static uint16_t joystickBuffer[2];
-static uint16_t accelerometer_z_axis;
-//Joystick reading
 bool tilted = false;
-//Button reading
 bool token = false;
-
-//Idk where to put this one lol its for the last part of UART
 bool authorChanged = false;
 bool songChanged = false;
 bool receivedAuthor = false;
-
-//All images in image.c careful don't open it
 Graphics_Image spotify_logos[12];
 int32_t rotation = 0;
 int32_t slide_value =SCREEN_MAXWIDTH;
-//syncronization
 volatile bool playing = false; //tell if the image has to be rotated or not
 volatile int32_t volume = 50;
 volatile bool volumeChanged = false;
-//draw image
-const int32_t VOLUME_BAR_POSITION_X = 14;
 int32_t show_bar_counter = MAX_TIME_PERIOD_SHOW_BAR;
+bool first = true;
 
 
 
-/* UART Configuration Parameter. These are the configuration parameters to
- * make the eUSCI A UART module to operate with a 115200 baud rate. These
- * values were calculated using the online calculator that TI provides
- * at:
- * http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/MSP430BaudRateConverter/index.html
- */
-//mmhhh... could use 2 uart
 const eUSCI_UART_ConfigV1 uartConfig =
 {
-        EUSCI_A_UART_CLOCKSOURCE_SMCLK,          // SMCLK Clock Source
-        26,//13,                                      // BRDIV = 13
-        0,                                       // UCxBRF = 0
-        111,//37,                                      // UCxBRS = 37
+        EUSCI_A_UART_CLOCKSOURCE_SMCLK,          // SMCLK Clock Source (3MHz)
+        26,                                      // prescaler for timer
+        0,                                       // first modulation stage select
+        111,                                     // second modulation stage select
         EUSCI_A_UART_NO_PARITY,                  // No Parity
         EUSCI_A_UART_LSB_FIRST,                  // LSB First
         EUSCI_A_UART_ONE_STOP_BIT,               // One stop bit
         EUSCI_A_UART_MODE,                       // UART mode
-        EUSCI_A_UART_OVERSAMPLING_BAUDRATE_GENERATION,  // Oversampling
+        EUSCI_A_UART_OVERSAMPLING_BAUDRATE_GENERATION,  // Oversampling enable
         EUSCI_A_UART_8_BIT_LEN                  // 8 bit data length
 };
 
+const Timer_A_UpModeConfig upConfig =
+{
+        TIMER_A_CLOCKSOURCE_ACLK,              // ACLK = 32768 Hz
+        TIMER_A_CLOCKSOURCE_DIVIDER_1,         // ACLK/1
+        TIMER_PERIOD,                          // 6 per second
+        TIMER_A_TAIE_INTERRUPT_DISABLE,         // Disable Timer interrupt
+        TIMER_A_CCIE_CCR0_INTERRUPT_ENABLE ,    // Enable CCR0 interrupt
+        TIMER_A_DO_CLEAR                        // Clear value
+};
 
-//LCD display
+
+
 void _graphicsInit()
 {
     /* Initializes display */
@@ -102,30 +94,18 @@ void _graphicsInit()
     Graphics_clearDisplay(&g_sContext);
 }
 
-//DriverLib
-
 void setUpButtons(){
-    //clean voltage in buttons
+    //clean voltage in button
     GPIO_setOutputLowOnPin(GPIO_PORT_P5, GPIO_PIN1);
-    GPIO_setOutputLowOnPin(GPIO_PORT_P3, GPIO_PIN5);
-
-
     //buttons boosterpack
     // J4.33 -> p5.1
     // J4.32 -> p3.5
     GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P5,GPIO_PIN1);
     GPIO_enableInterrupt(GPIO_PORT_P5,GPIO_PIN1);
-
-    GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P3,GPIO_PIN5);
-    GPIO_enableInterrupt(GPIO_PORT_P3,GPIO_PIN5);
     //registering to NVIC
-    Interrupt_enableInterrupt(INT_PORT3);
     Interrupt_enableInterrupt(INT_PORT5);
-
     //clear interrupt flags
     GPIO_clearInterruptFlag(GPIO_PORT_P5, GPIO_PIN1);
-    GPIO_clearInterruptFlag(GPIO_PORT_P3, GPIO_PIN5);
-
     /* activate interrupt notification */
     Interrupt_enableMaster();
 }
@@ -140,7 +120,7 @@ bool consumetoken(){
 }
 
 void _adcInit(){
-    /* Configures Pin 6.0 and 4.4 as ADC input for the jotstick*/
+    /* Configures Pin 6.0 and 4.4 as ADC input for the joystick*/
         GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P6, GPIO_PIN0, GPIO_TERTIARY_MODULE_FUNCTION);
         GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P4, GPIO_PIN4, GPIO_TERTIARY_MODULE_FUNCTION);
         /*6.1 as ADC input in order to read z axis from accelerometer*/
@@ -173,7 +153,6 @@ void _adcInit(){
 
         /* Enabling Interrupts */
         Interrupt_enableInterrupt(INT_ADC14);
-        Interrupt_enableMaster();
 
         /* Setting up the sample timer to automatically step through the sequence
          * convert.
@@ -185,7 +164,6 @@ void _adcInit(){
         ADC14_toggleConversionTrigger();
 }
 
-//UART 
 void sendString(char* str) {
     while(*str != '\0') {
         UART_transmitData(EUSCI_A2_BASE, *str);
@@ -198,18 +176,14 @@ void setUpUART(){
         GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P3,GPIO_PIN2 | GPIO_PIN3, GPIO_PRIMARY_MODULE_FUNCTION);
         GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN0);
         GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN0);
-        //MODIFIED FROM 24MHz to 48MHz DONT TOUCH IT
         FlashCtl_setWaitState(FLASH_BANK0, 2);
         FlashCtl_setWaitState(FLASH_BANK1, 2);
         PCM_setCoreVoltageLevel(PCM_VCORE1);
-        CS_setDCOCenteredFrequency(CS_DCO_FREQUENCY_48);
-
+        CS_setDCOCenteredFrequency(CS_DCO_FREQUENCY_48); //MODIFIED TO 48MHz
         /* Configuring UART Module */
         UART_initModule(EUSCI_A2_BASE, &uartConfig);
-
         /* Enable UART module */
         UART_enableModule(EUSCI_A2_BASE);
-
         /* Enabling interrupts */
         UART_enableInterrupt(EUSCI_A2_BASE, EUSCI_A_UART_RECEIVE_INTERRUPT);
         Interrupt_enableInterrupt(INT_EUSCIA2);
@@ -217,20 +191,9 @@ void setUpUART(){
 }
 
 
-//Timer
-const Timer_A_UpModeConfig upConfig =
-{
-        TIMER_A_CLOCKSOURCE_ACLK,              // ACLK = 32768 Hz
-        TIMER_A_CLOCKSOURCE_DIVIDER_1,         // ACLK/1
-        TIMER_PERIOD,                           // every second
-        TIMER_A_TAIE_INTERRUPT_DISABLE,         // Disable Timer interrupt
-        TIMER_A_CCIE_CCR0_INTERRUPT_ENABLE ,    // Enable CCR0 interrupt
-        TIMER_A_DO_CLEAR                        // Clear value
-}; //TIMER IN UPMODE
-
 
 void set_timer(){
-    CS_setReferenceOscillatorFrequency(CS_REFO_32KHZ); //either 32 or 128
+    CS_setReferenceOscillatorFrequency(CS_REFO_32KHZ); //32.768kHz
     CS_initClockSignal(CS_ACLK,CS_REFOCLK_SELECT, CS_CLOCK_DIVIDER_1);
     Timer_A_configureUpMode(TIMER_A1_BASE, &upConfig);
     Interrupt_enableInterrupt(INT_TA1_0);
@@ -256,17 +219,12 @@ void _hwinit(){
     CS_initClockSignal(CS_ACLK, CS_REFOCLK_SELECT, CS_CLOCK_DIVIDER_1);
 
 
-    //Flush stdout -- remove this!!!!
-    fflush(stdout);
     setUpButtons();
     _adcInit();
     _graphicsInit();
     setUpUART();
     set_timer();
 }
-
-
-//GRAPHICS
 
 
 void logosinit(){
@@ -285,7 +243,7 @@ void logosinit(){
 }
 
 
-bool first = true;
+
 
 void drawscreen(int32_t slide_value,int32_t rotation){
     if (authorChanged || songChanged){
@@ -360,7 +318,7 @@ void TA1_0_IRQHandler(void){
         }
 
         drawscreen(slide_value,rotation);
-        
+    
         slide_value--;
         if (slide_value == 0){
             printf("Resizing\n");
@@ -372,7 +330,6 @@ void TA1_0_IRQHandler(void){
             slide_value = SCREEN_MAXWIDTH;
         }
         
-        //if the device is playing, rotate the logo
         if (playing){
             rotation = (rotation + 1) % 11;
         }
@@ -431,9 +388,6 @@ void EUSCIA2_IRQHandler(void)
 
 
 
-//Button handlers
-
-
 void PORT5_IRQHandler(){
     uint_fast16_t status = GPIO_getEnabledInterruptStatus(GPIO_PORT_P5);
     GPIO_clearInterruptFlag(GPIO_PORT_P5,status);
@@ -442,16 +396,6 @@ void PORT5_IRQHandler(){
     }
 }
 
-
-void PORT3_IRQHandler(){
-    uint_fast16_t status = GPIO_getEnabledInterruptStatus(GPIO_PORT_P3);
-    GPIO_clearInterruptFlag(GPIO_PORT_P3,status);
-    if (status & GPIO_PIN5 ){
-        printf("ormai è periodica sta foto\n");
-    }
-}
-
-//Joystick values reading
 
 //check if Joystick is not tilted at all
 bool isInIdleState(int x){
@@ -539,3 +483,6 @@ void ADC14_IRQHandler(void){
         }
     }
 }
+
+
+
